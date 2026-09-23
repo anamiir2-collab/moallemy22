@@ -1,9 +1,12 @@
 /* ============================================
    مُعلّمي | storage.js
    Local Cache + Supabase Cloud Sync
+   Multi-Teacher Safe
    ============================================ */
 
 const Storage = (function () {
+  'use strict';
+
   const PREFIX = 'moallemy_';
   const DATA_VERSION = 2;
 
@@ -69,7 +72,7 @@ const Storage = (function () {
     return PREFIX + name;
   }
 
-  function read(name, fallback) {
+  function read(name, fallback = null) {
     try {
       const raw = localStorage.getItem(key(name));
 
@@ -78,27 +81,54 @@ const Storage = (function () {
       }
 
       return JSON.parse(raw);
-    } catch (e) {
-      console.error('[Storage] read error:', name, e);
+
+    } catch (error) {
+
+      console.error(
+        '[Storage] read error:',
+        name,
+        error
+      );
+
       return fallback;
     }
   }
 
   function write(name, value) {
     try {
-      localStorage.setItem(key(name), JSON.stringify(value));
-      return true;
-    } catch (e) {
-      console.error('[Storage] write error:', name, e);
 
-      if (e.name === 'QuotaExceededError') {
+      localStorage.setItem(
+        key(name),
+        JSON.stringify(value)
+      );
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        '[Storage] write error:',
+        name,
+        error
+      );
+
+      if (
+        error.name === 'QuotaExceededError'
+      ) {
+
         try {
-          const notifications = read(KEYS.notifications, []);
+
+          const notifications =
+            read(
+              KEYS.notifications,
+              []
+            );
 
           if (
             Array.isArray(notifications) &&
             notifications.length > 50
           ) {
+
             write(
               KEYS.notifications,
               notifications.slice(0, 50)
@@ -111,10 +141,12 @@ const Storage = (function () {
 
             return true;
           }
-        } catch (e2) {
+
+        } catch (cleanupError) {
+
           console.error(
             '[Storage] cleanup failed:',
-            e2
+            cleanupError
           );
         }
       }
@@ -124,7 +156,15 @@ const Storage = (function () {
   }
 
   function remove(name) {
-    localStorage.removeItem(key(name));
+    try {
+      localStorage.removeItem(key(name));
+    } catch (error) {
+      console.error(
+        '[Storage] remove error:',
+        name,
+        error
+      );
+    }
   }
 
   /* ============================================
@@ -132,12 +172,29 @@ const Storage = (function () {
      ============================================ */
 
   function uid(prefix = '') {
-    const ts = Date.now().toString(36);
-    const rand = Math.random()
-      .toString(36)
-      .slice(2, 8);
+
+    const ts =
+      Date.now().toString(36);
+
+    const rand =
+      Math.random()
+        .toString(36)
+        .slice(2, 10);
 
     return `${prefix}${ts}${rand}`;
+  }
+
+  /* ============================================
+     Cloud ID
+     ============================================ */
+
+  function getSettingsCloudId() {
+
+    if (!cloudUserId) {
+      return null;
+    }
+
+    return `settings_${cloudUserId}`;
   }
 
   /* ============================================
@@ -148,7 +205,8 @@ const Storage = (function () {
 
     2: function () {
 
-      // توحيد حالات الحضور
+      /* ---------- Attendance ---------- */
+
       const attMap = {
         present: 'حاضر',
         absent: 'غائب',
@@ -156,30 +214,41 @@ const Storage = (function () {
         excused: 'غياب بعذر'
       };
 
-      const attendance = read(
-        KEYS.attendance,
-        []
-      );
+      const attendance =
+        read(
+          KEYS.attendance,
+          []
+        );
 
       let attChanged = false;
 
       if (Array.isArray(attendance)) {
-        attendance.forEach(a => {
-          if (a && attMap[a.status]) {
-            a.status = attMap[a.status];
+
+        attendance.forEach(item => {
+
+          if (
+            item &&
+            attMap[item.status]
+          ) {
+
+            item.status =
+              attMap[item.status];
+
             attChanged = true;
           }
         });
       }
 
       if (attChanged) {
+
         write(
           KEYS.attendance,
           attendance
         );
       }
 
-      // توحيد حالات الحصص
+      /* ---------- Lessons ---------- */
+
       const lessonMap = {
         completed: 'تمت',
         scheduled: 'مجدولة',
@@ -187,80 +256,111 @@ const Storage = (function () {
         postponed: 'مؤجلة'
       };
 
-      const lessons = read(
-        KEYS.lessons,
-        []
-      );
+      const lessons =
+        read(
+          KEYS.lessons,
+          []
+        );
 
       let lessonChanged = false;
 
       if (Array.isArray(lessons)) {
-        lessons.forEach(l => {
-          if (l && lessonMap[l.status]) {
-            l.status = lessonMap[l.status];
+
+        lessons.forEach(item => {
+
+          if (
+            item &&
+            lessonMap[item.status]
+          ) {
+
+            item.status =
+              lessonMap[item.status];
+
             lessonChanged = true;
           }
         });
       }
 
       if (lessonChanged) {
+
         write(
           KEYS.lessons,
           lessons
         );
       }
 
-      // إثراء الدرجات
-      const exams = read(
-        KEYS.exams,
-        []
-      );
+      /* ---------- Grades ---------- */
 
-      const grades = read(
-        KEYS.grades,
-        []
-      );
+      const exams =
+        read(
+          KEYS.exams,
+          []
+        );
+
+      const grades =
+        read(
+          KEYS.grades,
+          []
+        );
 
       let gradesChanged = false;
 
       if (Array.isArray(grades)) {
-        grades.forEach(g => {
 
-          if (!g.type) {
-            g.type = 'اختبار';
-            gradesChanged = true;
-          }
+        grades.forEach(grade => {
 
-          if (!g.title) {
-            const exam = Array.isArray(exams)
-              ? exams.find(e => e.id === g.examId)
-              : null;
+          if (!grade.type) {
 
-            g.title = exam
-              ? exam.name
-              : 'درجة';
+            grade.type =
+              'اختبار';
 
             gradesChanged = true;
           }
 
-          if (!g.date) {
-            const exam = Array.isArray(exams)
-              ? exams.find(e => e.id === g.examId)
-              : null;
+          if (!grade.title) {
 
-            g.date = exam
-              ? exam.date
-              : new Date()
-                  .toISOString()
-                  .slice(0, 10);
+            const exam =
+              Array.isArray(exams)
+                ? exams.find(
+                    e =>
+                      e.id ===
+                      grade.examId
+                  )
+                : null;
+
+            grade.title =
+              exam
+                ? exam.name
+                : 'درجة';
 
             gradesChanged = true;
           }
 
+          if (!grade.date) {
+
+            const exam =
+              Array.isArray(exams)
+                ? exams.find(
+                    e =>
+                      e.id ===
+                      grade.examId
+                  )
+                : null;
+
+            grade.date =
+              exam
+                ? exam.date
+                : new Date()
+                    .toISOString()
+                    .slice(0, 10);
+
+            gradesChanged = true;
+          }
         });
       }
 
       if (gradesChanged) {
+
         write(
           KEYS.grades,
           grades
@@ -271,31 +371,38 @@ const Storage = (function () {
 
   function runMigrations() {
 
-    const meta = read(
-      KEYS.meta,
-      {}
-    );
+    const meta =
+      read(
+        KEYS.meta,
+        {}
+      );
 
     let current =
       meta.dataVersion || 1;
 
-    if (current >= DATA_VERSION) {
+    if (
+      current >= DATA_VERSION
+    ) {
       return;
     }
 
     for (
-      let v = current + 1;
-      v <= DATA_VERSION;
-      v++
+      let version = current + 1;
+      version <= DATA_VERSION;
+      version++
     ) {
 
       try {
 
-        if (MIGRATIONS[v]) {
-          MIGRATIONS[v]();
+        if (
+          MIGRATIONS[version]
+        ) {
+
+          MIGRATIONS[version]();
         }
 
-        meta.dataVersion = v;
+        meta.dataVersion =
+          version;
 
         write(
           KEYS.meta,
@@ -303,14 +410,16 @@ const Storage = (function () {
         );
 
         console.info(
-          '[Storage] migrated data to version ' + v
+          '[Storage] migrated data to version ' +
+          version
         );
 
-      } catch (e) {
+      } catch (error) {
 
         console.error(
-          '[Storage] migration ' + v + ' failed:',
-          e
+          '[Storage] migration failed:',
+          version,
+          error
         );
 
         break;
@@ -323,10 +432,12 @@ const Storage = (function () {
      ============================================ */
 
   function getSupabase() {
+
     if (
       !window.supabaseClient ||
       !cloudUserId
     ) {
+
       return null;
     }
 
@@ -339,6 +450,7 @@ const Storage = (function () {
       !cloudReady ||
       !cloudUserId
     ) {
+
       return;
     }
 
@@ -347,44 +459,63 @@ const Storage = (function () {
     );
 
     syncTimers[collection] =
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        syncCollection(collection);
+          syncCollection(
+            collection
+          );
 
-      }, 500);
+        },
+        700
+      );
   }
 
   /* ============================================
-     Sync Collection To Supabase
+     Sync Collection
      ============================================ */
 
-  async function syncCollection(collection) {
+  async function syncCollection(
+    collection
+  ) {
 
-    const supabase = getSupabase();
-    const table = CLOUD_TABLES[collection];
+    const supabase =
+      getSupabase();
+
+    const table =
+      CLOUD_TABLES[collection];
 
     if (
       !supabase ||
       !table ||
       !cloudUserId
     ) {
-      return;
+
+      return false;
     }
 
     try {
 
-      const items = read(
-        collection,
-        []
-      );
+      const items =
+        read(
+          collection,
+          []
+        );
 
       const safeItems =
         Array.isArray(items)
           ? items
           : [];
 
-      // حذف النسخة الحالية الخاصة بالمدرس
-      const { error: deleteError } =
+      /*
+       * نحذف فقط بيانات المعلم الحالي.
+       * بسبب RLS لن يستطيع المعلم الوصول
+       * لبيانات أي معلم آخر.
+       */
+
+      const {
+        error: deleteError
+      } =
         await supabase
           .from(table)
           .delete()
@@ -394,37 +525,49 @@ const Storage = (function () {
           );
 
       if (deleteError) {
+
         console.error(
           '[Cloud] delete error:',
           collection,
           deleteError
         );
-        return;
+
+        return false;
       }
 
       if (!safeItems.length) {
-        return;
+        return true;
       }
 
       const rows =
-        safeItems.map(item => ({
-          id: String(
-            item.id || uid(
-              collection.slice(0, 3) + '_'
-            )
-          ),
+        safeItems.map(item => {
 
-          teacher_id:
-            cloudUserId,
+          const id =
+            String(
+              item.id ||
+              uid(
+                collection.slice(0, 3) +
+                '_'
+              )
+            );
 
-          data: item
-        }));
+          return {
+            id,
+            teacher_id:
+              cloudUserId,
+            data: {
+              ...item,
+              id
+            }
+          };
+        });
 
       const {
         error: insertError
-      } = await supabase
-        .from(table)
-        .insert(rows);
+      } =
+        await supabase
+          .from(table)
+          .insert(rows);
 
       if (insertError) {
 
@@ -434,7 +577,7 @@ const Storage = (function () {
           insertError
         );
 
-        return;
+        return false;
       }
 
       console.info(
@@ -443,6 +586,8 @@ const Storage = (function () {
         safeItems.length
       );
 
+      return true;
+
     } catch (error) {
 
       console.error(
@@ -450,6 +595,8 @@ const Storage = (function () {
         collection,
         error
       );
+
+      return false;
     }
   }
 
@@ -459,10 +606,15 @@ const Storage = (function () {
 
   async function syncSettings() {
 
-    const supabase = getSupabase();
+    const supabase =
+      getSupabase();
 
-    if (!supabase) {
-      return;
+    if (
+      !supabase ||
+      !cloudUserId
+    ) {
+
+      return false;
     }
 
     try {
@@ -473,28 +625,37 @@ const Storage = (function () {
           {}
         );
 
+      const settingsId =
+        getSettingsCloudId();
+
       const {
         error
-      } = await supabase
-        .from('settings')
-        .upsert(
-          {
-            id: 'settings',
-            teacher_id:
-              cloudUserId,
-            data: settings
-          },
-          {
-            onConflict: 'id'
-          }
-        );
+      } =
+        await supabase
+          .from('settings')
+          .upsert(
+            {
+              id: settingsId,
+              teacher_id:
+                cloudUserId,
+              data: settings
+            },
+            {
+              onConflict: 'id'
+            }
+          );
 
       if (error) {
+
         console.error(
           '[Cloud] settings error:',
           error
         );
+
+        return false;
       }
+
+      return true;
 
     } catch (error) {
 
@@ -502,6 +663,8 @@ const Storage = (function () {
         '[Cloud] settings exception:',
         error
       );
+
+      return false;
     }
   }
 
@@ -511,10 +674,15 @@ const Storage = (function () {
 
   async function syncTeacher() {
 
-    const supabase = getSupabase();
+    const supabase =
+      getSupabase();
 
-    if (!supabase) {
-      return;
+    if (
+      !supabase ||
+      !cloudUserId
+    ) {
+
+      return false;
     }
 
     try {
@@ -526,32 +694,50 @@ const Storage = (function () {
         );
 
       if (!teacher) {
-        return;
+        return false;
       }
 
       const profile = {
-        id: cloudUserId,
-        name: teacher.name || '',
-        phone: teacher.phone || '',
-        email: teacher.email || null,
-        subject: teacher.subject || '',
-        stage: teacher.stage || '',
+
+        id:
+          cloudUserId,
+
+        name:
+          teacher.name || '',
+
+        phone:
+          teacher.phone || '',
+
+        email:
+          teacher.email || null,
+
+        subject:
+          teacher.subject || '',
+
+        stage:
+          teacher.stage || '',
+
         governorate:
           teacher.governorate || '',
-        logo: teacher.logo || '',
-        bio: teacher.bio || ''
+
+        logo:
+          teacher.logo || '',
+
+        bio:
+          teacher.bio || ''
       };
 
       const {
         error
-      } = await supabase
-        .from('teacher_profiles')
-        .upsert(
-          profile,
-          {
-            onConflict: 'id'
-          }
-        );
+      } =
+        await supabase
+          .from('teacher_profiles')
+          .upsert(
+            profile,
+            {
+              onConflict: 'id'
+            }
+          );
 
       if (error) {
 
@@ -560,12 +746,10 @@ const Storage = (function () {
           error
         );
 
-        return;
+        return false;
       }
 
-      console.info(
-        '[Cloud] teacher profile synced'
-      );
+      return true;
 
     } catch (error) {
 
@@ -573,18 +757,25 @@ const Storage = (function () {
         '[Cloud] teacher sync exception:',
         error
       );
+
+      return false;
     }
   }
 
   /* ============================================
-     Load Teacher From Supabase
+     Load Teacher
      ============================================ */
 
   async function loadTeacher() {
 
-    const supabase = getSupabase();
+    const supabase =
+      getSupabase();
 
-    if (!supabase) {
+    if (
+      !supabase ||
+      !cloudUserId
+    ) {
+
       return false;
     }
 
@@ -593,11 +784,15 @@ const Storage = (function () {
       const {
         data,
         error
-      } = await supabase
-        .from('teacher_profiles')
-        .select('*')
-        .eq('id', cloudUserId)
-        .maybeSingle();
+      } =
+        await supabase
+          .from('teacher_profiles')
+          .select('*')
+          .eq(
+            'id',
+            cloudUserId
+          )
+          .maybeSingle();
 
       if (error) {
 
@@ -614,22 +809,41 @@ const Storage = (function () {
       }
 
       const teacher = {
-        id: data.id,
-        name: data.name || '',
-        phone: data.phone || '',
-        email: data.email || '',
-        subject: data.subject || '',
-        stage: data.stage || '',
+
+        id:
+          data.id,
+
+        name:
+          data.name || '',
+
+        phone:
+          data.phone || '',
+
+        email:
+          data.email || '',
+
+        subject:
+          data.subject || '',
+
+        stage:
+          data.stage || '',
+
         governorate:
           data.governorate || '',
-        logo: data.logo || '',
-        bio: data.bio || '',
+
+        logo:
+          data.logo || '',
+
+        bio:
+          data.bio || '',
+
         createdAt:
           data.created_at
             ? new Date(
                 data.created_at
               ).getTime()
             : Date.now(),
+
         updatedAt:
           data.updated_at
             ? new Date(
@@ -657,21 +871,25 @@ const Storage = (function () {
   }
 
   /* ============================================
-     Load Collection From Supabase
+     Load Collection
      ============================================ */
 
   async function loadCollection(
     collection
   ) {
 
-    const supabase = getSupabase();
+    const supabase =
+      getSupabase();
+
     const table =
       CLOUD_TABLES[collection];
 
     if (
       !supabase ||
-      !table
+      !table ||
+      !cloudUserId
     ) {
+
       return {
         success: false,
         hasRemoteData: false
@@ -683,15 +901,16 @@ const Storage = (function () {
       const {
         data,
         error
-      } = await supabase
-        .from(table)
-        .select(
-          'id,data,created_at,updated_at'
-        )
-        .eq(
-          'teacher_id',
-          cloudUserId
-        );
+      } =
+        await supabase
+          .from(table)
+          .select(
+            'id,data,created_at,updated_at'
+          )
+          .eq(
+            'teacher_id',
+            cloudUserId
+          );
 
       if (error) {
 
@@ -713,49 +932,53 @@ const Storage = (function () {
           : [];
 
       /*
-       * لو فيه بيانات أونلاين:
-       * نخلي السحابة هي المصدر الأساسي.
-       *
-       * لو مفيش بيانات أونلاين:
-       * نسيب البيانات المحلية كما هي
-       * علشان نقدر نرحّل بيانات المدرس القديمة.
+       * السحابة هي المصدر الأساسي
+       * إذا كان لديها بيانات.
        */
 
       if (rows.length > 0) {
 
         const items =
-          rows.map(row => ({
-            ...(row.data || {}),
-            id: row.id,
-            createdAt:
+          rows.map(row => {
+
+            const original =
               row.data &&
-              row.data.createdAt
-                ? row.data.createdAt
-                : (
-                    row.created_at
-                      ? new Date(
-                          row.created_at
-                        ).getTime()
-                      : Date.now()
-                  ),
-            updatedAt:
-              row.data &&
-              row.data.updatedAt
-                ? row.data.updatedAt
-                : (
-                    row.updated_at
-                      ? new Date(
-                          row.updated_at
-                        ).getTime()
-                      : Date.now()
-                  )
-          }));
+              typeof row.data === 'object'
+                ? row.data
+                : {};
+
+            return {
+              ...original,
+
+              id:
+                row.id,
+
+              createdAt:
+                original.createdAt ||
+                (
+                  row.created_at
+                    ? new Date(
+                        row.created_at
+                      ).getTime()
+                    : Date.now()
+                ),
+
+              updatedAt:
+                original.updatedAt ||
+                (
+                  row.updated_at
+                    ? new Date(
+                        row.updated_at
+                      ).getTime()
+                    : Date.now()
+                )
+            };
+          });
 
         write(
           collection,
           items
         );
-
       }
 
       return {
@@ -785,29 +1008,39 @@ const Storage = (function () {
 
   async function loadSettings() {
 
-    const supabase = getSupabase();
+    const supabase =
+      getSupabase();
 
-    if (!supabase) {
+    if (
+      !supabase ||
+      !cloudUserId
+    ) {
+
       return false;
     }
 
     try {
 
+      /*
+       * لا نعتمد على id = settings
+       * لأن كل معلم له ID مختلف.
+       */
+
       const {
         data,
         error
-      } = await supabase
-        .from('settings')
-        .select('id,data')
-        .eq(
-          'teacher_id',
-          cloudUserId
-        )
-        .eq(
-          'id',
-          'settings'
-        )
-        .maybeSingle();
+      } =
+        await supabase
+          .from('settings')
+          .select(
+            'id,data,created_at,updated_at'
+          )
+          .eq(
+            'teacher_id',
+            cloudUserId
+          )
+          .limit(1)
+          .maybeSingle();
 
       if (error) {
 
@@ -819,7 +1052,10 @@ const Storage = (function () {
         return false;
       }
 
-      if (data && data.data) {
+      if (
+        data &&
+        data.data
+      ) {
 
         write(
           KEYS.settings,
@@ -852,8 +1088,11 @@ const Storage = (function () {
       return false;
     }
 
-    cloudUserId = userId;
-    cloudReady = false;
+    cloudUserId =
+      userId;
+
+    cloudReady =
+      false;
 
     console.info(
       '[Cloud] initializing for user:',
@@ -862,13 +1101,27 @@ const Storage = (function () {
 
     try {
 
+      /*
+       * 1. تحميل بيانات المعلم
+       */
+
       await loadTeacher();
+
+      /*
+       * 2. تحميل الإعدادات
+       */
 
       await loadSettings();
 
+      /*
+       * 3. تحميل جميع البيانات
+       */
+
       for (
         const collection
-        of Object.keys(CLOUD_TABLES)
+        of Object.keys(
+          CLOUD_TABLES
+        )
       ) {
 
         await loadCollection(
@@ -876,11 +1129,16 @@ const Storage = (function () {
         );
       }
 
-      cloudReady = true;
+      /*
+       * نعلن أن الاتصال أصبح جاهزًا
+       */
+
+      cloudReady =
+        true;
 
       /*
-       * مزامنة البيانات المحلية القديمة
-       * لو الحساب السحابي جديد ومفيش بيانات عليه.
+       * 4. ترحيل البيانات المحلية
+       * للحساب الجديد فقط.
        */
 
       await migrateLocalDataToCloud();
@@ -898,14 +1156,15 @@ const Storage = (function () {
         error
       );
 
-      cloudReady = false;
+      cloudReady =
+        false;
 
       return false;
     }
   }
 
   /* ============================================
-     Migrate Existing Local Data
+     Migrate Local Data
      ============================================ */
 
   async function migrateLocalDataToCloud() {
@@ -914,14 +1173,22 @@ const Storage = (function () {
       !cloudReady ||
       !cloudUserId
     ) {
+
       return;
     }
 
     try {
 
+      /*
+       * لا نرفع بيانات subjects/stages
+       * لأنها ليست ضمن جداول Supabase الحالية.
+       */
+
       for (
         const collection
-        of Object.keys(CLOUD_TABLES)
+        of Object.keys(
+          CLOUD_TABLES
+        )
       ) {
 
         const result =
@@ -929,46 +1196,51 @@ const Storage = (function () {
             collection
           );
 
-        /*
-         * لو مفيش بيانات على Supabase
-         * لكن فيه بيانات محلية،
-         * نرفع البيانات المحلية.
-         */
+        if (
+          !result.success ||
+          result.hasRemoteData
+        ) {
+          continue;
+        }
+
+        const localItems =
+          read(
+            collection,
+            []
+          );
 
         if (
-          result.success &&
-          !result.hasRemoteData
+          Array.isArray(localItems) &&
+          localItems.length > 0
         ) {
 
-          const localItems =
-            read(
-              collection,
-              []
-            );
-
-          if (
-            Array.isArray(localItems) &&
-            localItems.length > 0
-          ) {
-
-            await syncCollection(
-              collection
-            );
-          }
+          await syncCollection(
+            collection
+          );
         }
       }
+
+      /*
+       * Settings
+       */
 
       const remoteSettings =
         await loadSettings();
 
       if (!remoteSettings) {
+
         await syncSettings();
       }
+
+      /*
+       * Teacher
+       */
 
       const remoteTeacher =
         await loadTeacher();
 
       if (!remoteTeacher) {
+
         await syncTeacher();
       }
 
@@ -991,18 +1263,23 @@ const Storage = (function () {
       !cloudReady ||
       !cloudUserId
     ) {
+
       return false;
     }
 
     try {
 
       await syncTeacher();
+
       await syncSettings();
 
       for (
         const collection
-        of Object.keys(CLOUD_TABLES)
+        of Object.keys(
+          CLOUD_TABLES
+        )
       ) {
+
         await syncCollection(
           collection
         );
@@ -1022,12 +1299,105 @@ const Storage = (function () {
   }
 
   /* ============================================
+     Clear Cloud Data
+     ============================================ */
+
+  async function clearCloudData() {
+
+    const supabase =
+      getSupabase();
+
+    if (
+      !supabase ||
+      !cloudUserId
+    ) {
+
+      return false;
+    }
+
+    try {
+
+      /*
+       * حذف بيانات الجداول المرتبطة بالمعلم.
+       * RLS يضمن حذف بيانات هذا المعلم فقط.
+       */
+
+      for (
+        const table
+        of Object.values(
+          CLOUD_TABLES
+        )
+      ) {
+
+        const {
+          error
+        } =
+          await supabase
+            .from(table)
+            .delete()
+            .eq(
+              'teacher_id',
+              cloudUserId
+            );
+
+        if (error) {
+
+          console.error(
+            '[Cloud] clear error:',
+            table,
+            error
+          );
+
+          return false;
+        }
+      }
+
+      /*
+       * حذف الإعدادات.
+       */
+
+      const {
+        error: settingsError
+      } =
+        await supabase
+          .from('settings')
+          .delete()
+          .eq(
+            'teacher_id',
+            cloudUserId
+          );
+
+      if (settingsError) {
+
+        console.error(
+          '[Cloud] clear settings error:',
+          settingsError
+        );
+
+        return false;
+      }
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        '[Cloud] clear cloud exception:',
+        error
+      );
+
+      return false;
+    }
+  }
+
+  /* ============================================
      Clear Current User Cache
      ============================================ */
 
   function clearUserCache() {
 
     const cloudKeys = [
+
       KEYS.teacher,
       KEYS.students,
       KEYS.groups,
@@ -1049,11 +1419,16 @@ const Storage = (function () {
     ];
 
     cloudKeys.forEach(
-      k => remove(k)
+      remove
     );
 
-    cloudUserId = null;
-    cloudReady = false;
+    cloudUserId =
+      null;
+
+    cloudReady =
+      false;
+
+    syncTimers = {};
   }
 
   /* ============================================
@@ -1063,14 +1438,21 @@ const Storage = (function () {
   return {
 
     KEYS,
+
     DATA_VERSION,
+
     uid,
+
     runMigrations,
 
-    /* Cloud */
+    /* ---------- Cloud ---------- */
 
     initCloud,
+
     syncAll,
+
+    clearCloudData,
+
     clearUserCache,
 
     isCloudReady() {
@@ -1081,28 +1463,42 @@ const Storage = (function () {
       return cloudUserId;
     },
 
-    /* Generic CRUD */
+    /* ---------- Generic CRUD ---------- */
 
-    get(name, fallback) {
+    get(
+      name,
+      fallback = null
+    ) {
+
       return read(
         name,
         fallback
       );
     },
 
-    set(name, value) {
+    set(
+      name,
+      value
+    ) {
 
       const result =
-        write(name, value);
+        write(
+          name,
+          value
+        );
 
       if (!result) {
         return false;
       }
 
-      // مزامنة المدرس
+      /*
+       * Teacher
+       */
+
       if (
         name === KEYS.teacher
       ) {
+
         if (cloudReady) {
           syncTeacher();
         }
@@ -1110,30 +1506,43 @@ const Storage = (function () {
         return true;
       }
 
-      // مزامنة الإعدادات
+      /*
+       * Settings
+       */
+
       if (
         name === KEYS.settings
       ) {
+
         if (cloudReady) {
+
           clearTimeout(
             syncTimers.settings
           );
 
           syncTimers.settings =
             setTimeout(
-              syncSettings,
-              500
+              () => {
+                syncSettings();
+              },
+              700
             );
         }
 
         return true;
       }
 
-      // الجداول السحابية
+      /*
+       * Cloud collections
+       */
+
       if (
         CLOUD_TABLES[name]
       ) {
-        scheduleSync(name);
+
+        scheduleSync(
+          name
+        );
       }
 
       return true;
@@ -1147,11 +1556,12 @@ const Storage = (function () {
         CLOUD_TABLES[name] &&
         cloudReady
       ) {
+
         scheduleSync(name);
       }
     },
 
-    /* Collections */
+    /* ---------- Collections ---------- */
 
     list(
       collection,
@@ -1167,6 +1577,7 @@ const Storage = (function () {
       if (
         !Array.isArray(items)
       ) {
+
         return [];
       }
 
@@ -1189,12 +1600,15 @@ const Storage = (function () {
       if (
         !Array.isArray(items)
       ) {
+
         return null;
       }
 
       return (
         items.find(
-          i => i.id === id
+          item =>
+            item &&
+            item.id === id
         ) || null
       );
     },
@@ -1213,6 +1627,7 @@ const Storage = (function () {
       if (
         !Array.isArray(items)
       ) {
+
         throw new Error(
           '[Storage] collection is not an array: ' +
           collection
@@ -1220,6 +1635,7 @@ const Storage = (function () {
       }
 
       const newItem = {
+
         ...item,
 
         id:
@@ -1237,7 +1653,9 @@ const Storage = (function () {
           Date.now()
       };
 
-      items.push(newItem);
+      items.push(
+        newItem
+      );
 
       write(
         collection,
@@ -1247,6 +1665,7 @@ const Storage = (function () {
       if (
         CLOUD_TABLES[collection]
       ) {
+
         scheduleSync(
           collection
         );
@@ -1270,21 +1689,27 @@ const Storage = (function () {
       if (
         !Array.isArray(items)
       ) {
+
         return null;
       }
 
-      const idx =
+      const index =
         items.findIndex(
-          i => i.id === id
+          item =>
+            item &&
+            item.id === id
         );
 
-      if (idx === -1) {
+      if (index === -1) {
         return null;
       }
 
-      items[idx] = {
-        ...items[idx],
+      items[index] = {
+
+        ...items[index],
+
         ...updates,
+
         updatedAt:
           Date.now()
       };
@@ -1297,12 +1722,13 @@ const Storage = (function () {
       if (
         CLOUD_TABLES[collection]
       ) {
+
         scheduleSync(
           collection
         );
       }
 
-      return items[idx];
+      return items[index];
     },
 
     removeById(
@@ -1319,17 +1745,23 @@ const Storage = (function () {
       if (
         !Array.isArray(items)
       ) {
+
         return false;
       }
 
       const filtered =
         items.filter(
-          i => i.id !== id
+          item =>
+            item.id !== id
         );
 
       const changed =
         filtered.length !==
         items.length;
+
+      if (!changed) {
+        return false;
+      }
 
       write(
         collection,
@@ -1337,18 +1769,18 @@ const Storage = (function () {
       );
 
       if (
-        changed &&
         CLOUD_TABLES[collection]
       ) {
+
         scheduleSync(
           collection
         );
       }
 
-      return changed;
+      return true;
     },
 
-    /* Cascading Delete */
+    /* ---------- Cascading Delete ---------- */
 
     cascadeDelete(
       collection,
@@ -1357,38 +1789,42 @@ const Storage = (function () {
     ) {
 
       relations.forEach(
-        rel => {
+        relation => {
 
           const items =
             read(
-              rel.collection,
+              relation.collection,
               []
             );
 
           if (
             !Array.isArray(items)
           ) {
+
             return;
           }
 
           const filtered =
             items.filter(
-              i =>
-                i[rel.field] !== id
+              item =>
+                item[
+                  relation.field
+                ] !== id
             );
 
           write(
-            rel.collection,
+            relation.collection,
             filtered
           );
 
           if (
             CLOUD_TABLES[
-              rel.collection
+              relation.collection
             ]
           ) {
+
             scheduleSync(
-              rel.collection
+              relation.collection
             );
           }
         }
@@ -1400,24 +1836,36 @@ const Storage = (function () {
       );
     },
 
-    /* Backup */
+    /* ==========================================
+       Backup
+       ========================================== */
 
     exportAll() {
 
       const data = {};
 
       Object.values(KEYS)
-        .forEach(k => {
-          data[k] =
-            read(k, null);
+        .forEach(name => {
+
+          data[name] =
+            read(
+              name,
+              null
+            );
         });
 
       return {
-        app: 'moallemy',
+
+        app:
+          'moallemy',
+
         version:
           String(DATA_VERSION),
+
         exportedAt:
-          new Date().toISOString(),
+          new Date()
+            .toISOString(),
+
         data
       };
     },
@@ -1438,6 +1886,7 @@ const Storage = (function () {
           !parsed ||
           !parsed.data
         ) {
+
           throw new Error(
             'Invalid backup file'
           );
@@ -1447,6 +1896,7 @@ const Storage = (function () {
           parsed.app &&
           parsed.app !== 'moallemy'
         ) {
+
           throw new Error(
             'Not a Moallemy backup'
           );
@@ -1455,9 +1905,12 @@ const Storage = (function () {
         Object.entries(
           parsed.data
         ).forEach(
-          ([k, v]) => {
+          ([name, value]) => {
 
-            if (v === null) {
+            if (
+              value === null
+            ) {
+
               return;
             }
 
@@ -1467,14 +1920,14 @@ const Storage = (function () {
 
               const existing =
                 read(
-                  k,
-                  Array.isArray(v)
+                  name,
+                  Array.isArray(value)
                     ? []
                     : null
                 );
 
               if (
-                Array.isArray(v) &&
+                Array.isArray(value) &&
                 Array.isArray(existing)
               ) {
 
@@ -1485,14 +1938,14 @@ const Storage = (function () {
                   new Set(
                     existing
                       .map(
-                        i =>
-                          i &&
-                          i.id
+                        item =>
+                          item &&
+                          item.id
                       )
                       .filter(Boolean)
                   );
 
-                v.forEach(
+                value.forEach(
                   item => {
 
                     if (
@@ -1502,33 +1955,43 @@ const Storage = (function () {
                         item.id
                       )
                     ) {
-                      merged.push(item);
-                    }
 
+                      merged.push(
+                        item
+                      );
+                    }
                   }
                 );
 
                 write(
-                  k,
+                  name,
                   merged
                 );
 
               } else {
 
-                write(k, v);
+                write(
+                  name,
+                  value
+                );
               }
 
             } else {
 
-              write(k, v);
+              write(
+                name,
+                value
+              );
             }
 
             if (
-              CLOUD_TABLES[k]
+              CLOUD_TABLES[name]
             ) {
-              scheduleSync(k);
-            }
 
+              scheduleSync(
+                name
+              );
+            }
           }
         );
 
@@ -1542,6 +2005,7 @@ const Storage = (function () {
           (meta.dataVersion || 1) <
           DATA_VERSION
         ) {
+
           runMigrations();
         }
 
@@ -1551,11 +2015,11 @@ const Storage = (function () {
 
         return true;
 
-      } catch (e) {
+      } catch (error) {
 
         console.error(
           '[Storage] import error:',
-          e
+          error
         );
 
         return false;
@@ -1589,54 +2053,88 @@ const Storage = (function () {
         Object.entries(
           parsed.data
         ).forEach(
-          ([k, v]) => {
+          ([name, value]) => {
 
             if (
-              Array.isArray(v)
+              Array.isArray(value)
             ) {
-              counts[k] =
-                v.length;
-            }
 
+              counts[name] =
+                value.length;
+            }
           }
         );
 
         return {
+
           valid: true,
+
           app:
             parsed.app ||
             'moallemy',
+
           version:
             parsed.version ||
             '1',
+
           exportedAt:
             parsed.exportedAt ||
             null,
+
           counts
         };
 
-      } catch (e) {
+      } catch (error) {
 
         return {
+
           valid: false,
+
           error:
             'تعذر قراءة الملف (JSON غير صالح)'
         };
       }
     },
 
-    clearAll() {
+    /* ==========================================
+       Clear All
+       ========================================== */
+
+    async clearAll() {
+
+      /*
+       * نحذف من Supabase أولاً.
+       */
+
+      if (
+        cloudReady &&
+        cloudUserId
+      ) {
+
+        await clearCloudData();
+      }
+
+      /*
+       * ثم نمسح الكاش المحلي.
+       */
 
       Object.values(KEYS)
         .forEach(
-          k => remove(k)
+          remove
         );
 
-      cloudUserId = null;
-      cloudReady = false;
+      cloudUserId =
+        null;
+
+      cloudReady =
+        false;
+
+      syncTimers = {};
     },
 
-    /* Demo Mode */
+    /* ==========================================
+       Demo Mode
+       ========================================== */
 
     isDemoMode() {
 
@@ -1651,7 +2149,7 @@ const Storage = (function () {
       );
     },
 
-    setDemoMode(val) {
+    setDemoMode(value) {
 
       const meta =
         read(
@@ -1659,7 +2157,8 @@ const Storage = (function () {
           {}
         );
 
-      meta.demoMode = val;
+      meta.demoMode =
+        value === true;
 
       write(
         KEYS.meta,
@@ -1667,7 +2166,9 @@ const Storage = (function () {
       );
     },
 
-    /* Audit Log */
+    /* ==========================================
+       Audit Log
+       ========================================== */
 
     audit(
       action,
@@ -1685,13 +2186,18 @@ const Storage = (function () {
           meta.auditLog
         )
       ) {
+
         meta.auditLog = [];
       }
 
       meta.auditLog.unshift({
+
         action,
+
         details,
-        at: Date.now()
+
+        at:
+          Date.now()
       });
 
       meta.auditLog =
@@ -1715,11 +2221,14 @@ const Storage = (function () {
         );
 
       return (
-        meta.auditLog || []
+        meta.auditLog ||
+        []
       );
     },
 
-    /* Meta */
+    /* ==========================================
+       Meta
+       ========================================== */
 
     getMeta() {
 
@@ -1777,6 +2286,7 @@ const Seeds = {
   ],
 
   stages: [
+
     {
       id: 'kg',
       name: 'رياض الأطفال',
@@ -1868,25 +2378,35 @@ const Seeds = {
 
   defaultSettings: {
 
-    theme: 'light',
+    theme:
+      'light',
 
-    font: 'cairo',
+    font:
+      'cairo',
 
-    absenceAlertThreshold: 3,
+    absenceAlertThreshold:
+      3,
 
-    paymentReminderDay: 1,
+    paymentReminderDay:
+      1,
 
-    currency: 'ج.م',
+    currency:
+      'ج.م',
 
-    sendReportsByWhatsapp: true,
+    sendReportsByWhatsapp:
+      true,
 
-    autoGenerateLessons: true,
+    autoGenerateLessons:
+      true,
 
-    reportCenter: '',
+    reportCenter:
+      '',
 
-    reportPhone: '',
+    reportPhone:
+      '',
 
-    reportEmail: '',
+    reportEmail:
+      '',
 
     reportSignature:
       'مع خالص التحية والتقدير',
@@ -1894,43 +2414,73 @@ const Seeds = {
     reportColor:
       '#8B5E34',
 
-    aiEnabled: true,
+    aiEnabled:
+      true,
 
-    reportStyle: 'متوسط',
+    reportStyle:
+      'متوسط',
 
     weights: {
-      exams: 50,
-      assignments: 20,
-      attendance: 10,
-      continuous: 20
+
+      exams:
+        50,
+
+      assignments:
+        20,
+
+      attendance:
+        10,
+
+      continuous:
+        20
     }
   },
 
   ensureSeeds() {
 
+    /* ---------- Subjects ---------- */
+
+    const existingSubjects =
+      Storage.get(
+        Storage.KEYS.subjects,
+        null
+      );
+
     if (
-      !Storage.get(
-        Storage.KEYS.subjects
-      )
+      existingSubjects === null ||
+      existingSubjects === undefined
     ) {
 
       Storage.set(
         Storage.KEYS.subjects,
 
         Seeds.subjects.map(
-          (name, i) => ({
-            id: 'sub_' + i,
+          (name, index) => ({
+
+            id:
+              'sub_' +
+              index,
+
             name,
-            isDefault: true
+
+            isDefault:
+              true
           })
         )
       );
     }
 
+    /* ---------- Stages ---------- */
+
+    const existingStages =
+      Storage.get(
+        Storage.KEYS.stages,
+        null
+      );
+
     if (
-      !Storage.get(
-        Storage.KEYS.stages
-      )
+      existingStages === null ||
+      existingStages === undefined
     ) {
 
       Storage.set(
@@ -1939,35 +2489,44 @@ const Seeds = {
       );
     }
 
+    /* ---------- Settings ---------- */
+
+    const existingSettings =
+      Storage.get(
+        Storage.KEYS.settings,
+        null
+      );
+
     if (
-      !Storage.get(
-        Storage.KEYS.settings
-      )
+      existingSettings === null ||
+      existingSettings === undefined
     ) {
 
       Storage.set(
         Storage.KEYS.settings,
         {
-          ...Seeds.defaultSettings
+          ...Seeds.defaultSettings,
+
+          weights: {
+            ...Seeds.defaultSettings.weights
+          }
         }
       );
 
     } else {
 
-      const saved =
-        Storage.get(
-          Storage.KEYS.settings,
-          {}
-        );
-
       const merged = {
+
         ...Seeds.defaultSettings,
-        ...saved
+
+        ...existingSettings
       };
 
       merged.weights = {
+
         ...Seeds.defaultSettings.weights,
-        ...(saved.weights || {})
+
+        ...(existingSettings.weights || {})
       };
 
       Storage.set(
@@ -1976,24 +2535,33 @@ const Seeds = {
       );
     }
 
+    /* ---------- Local collections ---------- */
+
     [
       'notes',
       'goals',
       'reports'
-    ].forEach(k => {
+    ].forEach(
+      name => {
 
-      if (
-        Storage.get(k) === null ||
-        Storage.get(k) === undefined
-      ) {
+        const value =
+          Storage.get(
+            name,
+            null
+          );
 
-        Storage.set(
-          k,
-          []
-        );
+        if (
+          value === null ||
+          value === undefined
+        ) {
+
+          Storage.set(
+            name,
+            []
+          );
+        }
       }
-
-    });
+    );
   }
 };
 
@@ -2002,5 +2570,8 @@ const Seeds = {
    Expose Globally
    ============================================ */
 
-window.Storage = Storage;
-window.Seeds = Seeds;
+window.Storage =
+  Storage;
+
+window.Seeds =
+  Seeds;
