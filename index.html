@@ -125,31 +125,9 @@
         </div>
 
 
-        <!-- Login Method Switch (هاتف / بريد) -->
-
-        <div class="auth-tabs auth-switch" id="login-method" aria-label="طريقة الدخول">
-
-          <button
-            type="button"
-            class="auth-tab active"
-            data-method="phone"
-          >
-            بالهاتف
-          </button>
-
-          <button
-            type="button"
-            class="auth-tab"
-            data-method="email"
-          >
-            بالبريد
-          </button>
-
-        </div>
-
-
         <!-- ============================= -->
         <!-- Login Form -->
+        <!-- تسجيل الدخول بالبريد فقط -->
         <!-- ============================= -->
 
         <form
@@ -158,24 +136,7 @@
           autocomplete="off"
         >
 
-          <div class="field" id="login-phone-field">
-
-            <label for="login-phone">
-              رقم الهاتف
-            </label>
-
-            <input
-              type="tel"
-              id="login-phone"
-              inputmode="numeric"
-              placeholder="01xxxxxxxxx"
-              required
-            />
-
-          </div>
-
-
-          <div class="field hidden" id="login-email-field">
+          <div class="field" id="login-email-field">
 
             <label for="login-email">
               البريد الإلكتروني
@@ -186,30 +147,13 @@
               id="login-email"
               placeholder="email@example.com"
               autocomplete="username"
-            />
-
-          </div>
-
-
-          <div class="field" id="login-pin-field">
-
-            <label for="login-pin">
-              رمز المرور (PIN)
-            </label>
-
-            <input
-              type="password"
-              id="login-pin"
-              inputmode="numeric"
-              maxlength="6"
-              placeholder="••••"
               required
             />
 
           </div>
 
 
-          <div class="field hidden" id="login-password-field">
+          <div class="field" id="login-password-field">
 
             <label for="login-password">
               كلمة المرور
@@ -220,6 +164,7 @@
               id="login-password"
               placeholder="كلمة المرور"
               autocomplete="current-password"
+              required
             />
 
           </div>
@@ -228,7 +173,7 @@
           <button
             type="button"
             id="forgot-pass"
-            class="forgot-link hidden"
+            class="forgot-link"
           >
             نسيت كلمة المرور؟
           </button>
@@ -246,7 +191,11 @@
 
         <!-- Register Method Switch (هاتف / بريد) -->
 
-        <div class="auth-tabs auth-switch" id="reg-method" aria-label="طريقة إنشاء الحساب">
+        <div
+          class="auth-tabs auth-switch"
+          id="reg-method"
+          aria-label="طريقة إنشاء الحساب"
+        >
 
           <button
             type="button"
@@ -342,7 +291,9 @@
             <div class="field">
 
               <label for="reg-phone">
-                <span id="reg-phone-label">رقم الهاتف *</span>
+                <span id="reg-phone-label">
+                  رقم الهاتف *
+                </span>
               </label>
 
               <input
@@ -361,7 +312,9 @@
           <div class="field">
 
             <label for="reg-email">
-              <span id="reg-email-label">البريد الإلكتروني (اختياري)</span>
+              <span id="reg-email-label">
+                البريد الإلكتروني (اختياري)
+              </span>
             </label>
 
             <input
@@ -373,7 +326,10 @@
           </div>
 
 
-          <div class="field-row" id="reg-pin-row">
+          <div
+            class="field-row"
+            id="reg-pin-row"
+          >
 
             <div class="field">
 
@@ -413,7 +369,10 @@
           </div>
 
 
-          <div class="field-row hidden" id="reg-pass-row">
+          <div
+            class="field-row hidden"
+            id="reg-pass-row"
+          >
 
             <div class="field">
 
@@ -566,7 +525,7 @@
                 class="greeting-text"
                 id="greeting-text"
               >
-                أهلاً بك 👋
+                أهلاً بك
               </p>
 
               <p
@@ -597,6 +556,7 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
+
                 <circle
                   cx="11"
                   cy="11"
@@ -606,6 +566,7 @@
                 <path
                   d="m21 21-4.3-4.3"
                 />
+
               </svg>
 
             </button>
@@ -1010,7 +971,7 @@
   <!-- Scripts -->
   <!-- ============================= -->
 
-  <!-- Supabase (حزمة محلية — تعمل أوفلاين وبدون CDN) -->
+  <!-- Supabase -->
   <script
     src="js/vendor/supabase.js"
     defer
@@ -1103,3 +1064,4 @@
 
 </body>
 </html>
+
