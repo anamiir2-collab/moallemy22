@@ -2,102 +2,220 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#8B5E34" />
-  <meta name="description" content="مُعلّمي - نظام إدارة متكامل للمدرسين في مصر: الطلاب، المجموعات، الحصص، الحضور، المدفوعات، التقارير" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="مُعلّمي" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+  />
 
+  <meta name="theme-color" content="#8B5E34" />
+
+  <meta
+    name="description"
+    content="مُعلّمي - نظام إدارة متكامل للمدرسين في مصر: الطلاب، المجموعات، الحصص، الحضور، المدفوعات، التقارير"
+  />
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  />
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  />
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="مُعلّمي"
+  />
+
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
-  <link rel="icon" type="image/png" href="assets/icons/icon-192.png" />
+
+  <link
+    rel="apple-touch-icon"
+    href="assets/icons/icon-192.png"
+  />
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="assets/icons/icon-192.png"
+  />
 
   <title>مُعلّمي | Moallemy</title>
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- =========================================
+       Google Fonts
+       ========================================= -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
   <link
     href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
     rel="stylesheet"
   />
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/animations.css" />
-  <link rel="stylesheet" href="css/reports.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
-  <link rel="stylesheet" href="css/print.css" media="print" />
 
-  <!-- Chart.js CDN -->
+  <!-- =========================================
+       Styles
+       ========================================= -->
+
+  <link
+    rel="stylesheet"
+    href="css/style.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/components.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/animations.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/reports.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/responsive.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/print.css"
+    media="print"
+  />
+
+
+  <!-- =========================================
+       Chart.js
+       ========================================= -->
+
   <script
     src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
     defer
   ></script>
+
+
+  <!-- =========================================
+       Supabase
+       مهم:
+       يجب تحميل Supabase قبل ملفات التطبيق
+       ========================================= -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <script
+    src="js/supabase-config.js"
+  ></script>
+
 </head>
+
 
 <body>
 
-  <!-- ============================= -->
-  <!-- Splash / Loading -->
-  <!-- ============================= -->
 
-  <div id="splash-screen" class="splash-screen">
+  <!-- =========================================
+       Splash Screen
+       ========================================= -->
+
+  <div
+    id="splash-screen"
+    class="splash-screen"
+  >
 
     <div class="splash-logo">
 
       <div class="splash-icon">
+
         <img
           src="assets/icons/icon-192.png"
           alt="مُعلّمي"
         />
+
       </div>
 
+
       <div class="splash-text">
+
         <h1>مُعلّمي</h1>
+
         <p>Moallemy</p>
+
       </div>
 
     </div>
 
+
     <div class="splash-loader">
+
       <span></span>
+
     </div>
 
   </div>
 
 
-  <!-- ============================= -->
-  <!-- App Root -->
-  <!-- ============================= -->
+  <!-- =========================================
+       Application Root
+       ========================================= -->
 
-  <div id="app" class="app hidden">
+  <div
+    id="app"
+    class="app hidden"
+  >
 
 
-    <!-- ============================= -->
-    <!-- Onboarding / Auth -->
-    <!-- ============================= -->
+    <!-- =======================================
+         Authentication / Onboarding
+         ======================================= -->
 
-    <section id="auth-screen" class="auth-screen hidden">
+    <section
+      id="auth-screen"
+      class="auth-screen hidden"
+    >
 
       <div class="auth-container">
+
+
+        <!-- Auth Hero -->
 
         <div class="auth-hero">
 
           <div class="auth-logo">
 
             <div class="logo-mark">
+
               <img
                 src="assets/icons/icon-192.png"
                 alt="مُعلّمي"
               />
+
             </div>
 
           </div>
 
+
           <h1>مُعلّمي</h1>
+
 
           <p class="auth-tagline">
             كل دروسك وطلابك في مكان واحد
@@ -106,18 +224,23 @@
         </div>
 
 
-        <!-- Auth Tabs -->
+        <!-- =====================================
+             Auth Tabs
+             ===================================== -->
 
         <div class="auth-tabs">
 
           <button
+            type="button"
             class="auth-tab active"
             data-tab="login"
           >
             تسجيل الدخول
           </button>
 
+
           <button
+            type="button"
             class="auth-tab"
             data-tab="register"
           >
@@ -127,9 +250,9 @@
         </div>
 
 
-        <!-- ============================= -->
-        <!-- Login Form -->
-        <!-- ============================= -->
+        <!-- =====================================
+             Login Form
+             ===================================== -->
 
         <form
           id="login-form"
@@ -147,6 +270,7 @@
               type="tel"
               id="login-phone"
               inputmode="numeric"
+              autocomplete="username"
               placeholder="01xxxxxxxxx"
               required
             />
@@ -164,6 +288,7 @@
               type="password"
               id="login-pin"
               inputmode="numeric"
+              autocomplete="current-password"
               maxlength="6"
               placeholder="••••"
               required
@@ -182,15 +307,17 @@
         </form>
 
 
-        <!-- ============================= -->
-        <!-- Register Form -->
-        <!-- ============================= -->
+        <!-- =====================================
+             Register Form
+             ===================================== -->
 
         <form
           id="register-form"
           class="auth-form"
           autocomplete="off"
         >
+
+          <!-- Name -->
 
           <div class="field">
 
@@ -202,11 +329,14 @@
               type="text"
               id="reg-name"
               placeholder="مثال: أ/ أحمد محمد"
+              autocomplete="name"
               required
             />
 
           </div>
 
+
+          <!-- Subject + Stage -->
 
           <div class="field-row">
 
@@ -239,6 +369,8 @@
           </div>
 
 
+          <!-- Governorate + Phone -->
+
           <div class="field-row">
 
             <div class="field">
@@ -264,7 +396,9 @@
                 type="tel"
                 id="reg-phone"
                 inputmode="numeric"
+                autocomplete="tel"
                 placeholder="01xxxxxxxxx"
+                maxlength="11"
                 required
               />
 
@@ -272,6 +406,8 @@
 
           </div>
 
+
+          <!-- Email -->
 
           <div class="field">
 
@@ -282,11 +418,14 @@
             <input
               type="email"
               id="reg-email"
+              autocomplete="email"
               placeholder="email@example.com"
             />
 
           </div>
 
+
+          <!-- PIN -->
 
           <div class="field-row">
 
@@ -300,6 +439,7 @@
                 type="password"
                 id="reg-pin"
                 inputmode="numeric"
+                autocomplete="new-password"
                 maxlength="6"
                 placeholder="4-6 أرقام"
                 required
@@ -318,6 +458,7 @@
                 type="password"
                 id="reg-pin2"
                 inputmode="numeric"
+                autocomplete="new-password"
                 maxlength="6"
                 placeholder="••••"
                 required
@@ -327,6 +468,8 @@
 
           </div>
 
+
+          <!-- Register Button -->
 
           <button
             type="submit"
@@ -338,9 +481,12 @@
         </form>
 
 
-        <!-- Demo -->
+        <!-- =====================================
+             Demo
+             ===================================== -->
 
         <button
+          type="button"
           id="try-demo"
           class="btn btn-text btn-block"
         >
@@ -352,9 +498,9 @@
     </section>
 
 
-    <!-- ============================= -->
-    <!-- Main App -->
-    <!-- ============================= -->
+    <!-- =========================================
+         Main Application
+         ========================================= -->
 
     <main
       id="main-app"
@@ -362,13 +508,16 @@
     >
 
 
-      <!-- ============================= -->
-      <!-- Top Header -->
-      <!-- ============================= -->
+      <!-- =======================================
+           Header
+           ======================================= -->
 
       <header class="app-header">
 
         <div class="header-content">
+
+
+          <!-- User -->
 
           <div class="header-user">
 
@@ -379,6 +528,7 @@
               أ
             </div>
 
+
             <div class="header-greeting">
 
               <p
@@ -387,6 +537,7 @@
               >
                 أهلاً بك
               </p>
+
 
               <p
                 class="greeting-date"
@@ -398,11 +549,15 @@
           </div>
 
 
+          <!-- Header Actions -->
+
           <div class="header-actions">
+
 
             <!-- Search -->
 
             <button
+              type="button"
               class="icon-btn"
               id="header-search-btn"
               aria-label="بحث"
@@ -416,6 +571,7 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
+
                 <circle
                   cx="11"
                   cy="11"
@@ -425,6 +581,7 @@
                 <path
                   d="m21 21-4.3-4.3"
                 />
+
               </svg>
 
             </button>
@@ -433,6 +590,7 @@
             <!-- Notifications -->
 
             <button
+              type="button"
               class="icon-btn"
               id="header-notif-btn"
               aria-label="الإشعارات"
@@ -457,6 +615,7 @@
 
               </svg>
 
+
               <span
                 class="badge"
                 id="notif-badge"
@@ -474,9 +633,9 @@
       </header>
 
 
-      <!-- ============================= -->
-      <!-- Page Container -->
-      <!-- ============================= -->
+      <!-- =======================================
+           Page Container
+           ======================================= -->
 
       <div
         id="page-container"
@@ -484,18 +643,20 @@
       ></div>
 
 
-      <!-- ============================= -->
-      <!-- Bottom Navigation -->
-      <!-- ============================= -->
+      <!-- =======================================
+           Bottom Navigation
+           ======================================= -->
 
       <nav
         class="bottom-nav"
         id="bottom-nav"
       >
 
+
         <!-- Dashboard -->
 
         <button
+          type="button"
           class="nav-item active"
           data-page="dashboard"
         >
@@ -519,6 +680,7 @@
 
           </svg>
 
+
           <span>
             الرئيسية
           </span>
@@ -529,6 +691,7 @@
         <!-- Students -->
 
         <button
+          type="button"
           class="nav-item"
           data-page="students"
         >
@@ -562,6 +725,7 @@
 
           </svg>
 
+
           <span>
             الطلاب
           </span>
@@ -572,6 +736,7 @@
         <!-- Groups -->
 
         <button
+          type="button"
           class="nav-item"
           data-page="groups"
         >
@@ -605,6 +770,7 @@
 
           </svg>
 
+
           <span>
             المجموعات
           </span>
@@ -615,6 +781,7 @@
         <!-- Calendar -->
 
         <button
+          type="button"
           class="nav-item"
           data-page="calendar"
         >
@@ -642,6 +809,7 @@
 
           </svg>
 
+
           <span>
             التقويم
           </span>
@@ -652,6 +820,7 @@
         <!-- More -->
 
         <button
+          type="button"
           class="nav-item"
           data-page="more"
         >
@@ -683,6 +852,7 @@
 
           </svg>
 
+
           <span>
             المزيد
           </span>
@@ -694,9 +864,9 @@
     </main>
 
 
-    <!-- ============================= -->
-    <!-- Modal Container -->
-    <!-- ============================= -->
+    <!-- =========================================
+         Modal
+         ========================================= -->
 
     <div
       id="modal-container"
@@ -708,6 +878,7 @@
         id="modal-overlay"
       ></div>
 
+
       <div
         class="modal-content"
         id="modal-content"
@@ -718,9 +889,9 @@
     </div>
 
 
-    <!-- ============================= -->
-    <!-- Toast Container -->
-    <!-- ============================= -->
+    <!-- =========================================
+         Toast
+         ========================================= -->
 
     <div
       id="toast-container"
@@ -728,9 +899,9 @@
     ></div>
 
 
-    <!-- ============================= -->
-    <!-- Install Banner -->
-    <!-- ============================= -->
+    <!-- =========================================
+         Install Banner
+         ========================================= -->
 
     <div
       id="install-banner"
@@ -774,6 +945,7 @@
           ثبّت تطبيق مُعلّمي
         </strong>
 
+
         <span>
           الوصول السريع من شاشتك الرئيسية
         </span>
@@ -782,6 +954,7 @@
 
 
       <button
+        type="button"
         class="btn btn-primary btn-sm"
         id="install-btn"
       >
@@ -790,6 +963,7 @@
 
 
       <button
+        type="button"
         class="icon-btn"
         id="install-close"
         aria-label="إغلاق"
@@ -800,9 +974,9 @@
     </div>
 
 
-    <!-- ============================= -->
-    <!-- Update Banner -->
-    <!-- ============================= -->
+    <!-- =========================================
+         Update Banner
+         ========================================= -->
 
     <div
       id="update-banner"
@@ -813,7 +987,9 @@
         يتوفر إصدار جديد من التطبيق
       </span>
 
+
       <button
+        type="button"
         class="btn btn-primary btn-sm"
         id="update-btn"
       >
@@ -825,25 +1001,36 @@
   </div>
 
 
-  <!-- ============================= -->
-  <!-- Scripts -->
-  <!-- ============================= -->
+  <!-- =========================================
+       Application Scripts
+       الترتيب مهم جدًا
+       ========================================= -->
 
-  <!-- Scripts (الترتيب مهم: storage ثم utils ثم الوحدات ثم app) -->
+  <!-- Storage -->
+
   <script
     src="js/storage.js"
     defer
   ></script>
+
+
+  <!-- Utilities -->
 
   <script
     src="js/utils.js"
     defer
   ></script>
 
+
+  <!-- Authentication -->
+
   <script
     src="js/auth.js"
     defer
   ></script>
+
+
+  <!-- AI -->
 
   <script
     src="js/ai-analysis.js"
@@ -855,95 +1042,129 @@
     defer
   ></script>
 
+
+  <!-- Dashboard -->
+
   <script
     src="js/dashboard.js"
     defer
   ></script>
+
+
+  <!-- Students -->
 
   <script
     src="js/students.js"
     defer
   ></script>
 
+
+  <!-- Groups -->
+
   <script
     src="js/groups.js"
     defer
   ></script>
+
+
+  <!-- Lessons -->
 
   <script
     src="js/lessons.js"
     defer
   ></script>
 
+
+  <!-- Attendance -->
+
   <script
     src="js/attendance.js"
     defer
   ></script>
+
+
+  <!-- Assignments -->
 
   <script
     src="js/assignments.js"
     defer
   ></script>
 
+
+  <!-- Exams -->
+
   <script
     src="js/exams.js"
     defer
   ></script>
+
+
+  <!-- Payments -->
 
   <script
     src="js/payments.js"
     defer
   ></script>
 
+
+  <!-- Reports -->
+
   <script
     src="js/reports.js"
     defer
   ></script>
+
+
+  <!-- Parent Reports -->
 
   <script
     src="js/parent-report.js"
     defer
   ></script>
 
+
+  <!-- Calendar -->
+
   <script
     src="js/calendar.js"
     defer
   ></script>
+
+
+  <!-- Notifications -->
 
   <script
     src="js/notifications.js"
     defer
   ></script>
 
+
+  <!-- Search -->
+
   <script
     src="js/search.js"
     defer
   ></script>
+
+
+  <!-- Backup -->
 
   <script
     src="js/backup.js"
     defer
   ></script>
 
-  <!-- Scripts (الترتيب مهم) -->
 
-  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-  ></script>
-
-  <script
-    src="js/supabase-config.js"
-  ></script>
-
-  <script
-    src="js/storage.js"
-    defer
-  ></script>
+  <!-- =========================================
+       Main App
+       يجب أن يكون آخر ملف
+       ========================================= -->
 
   <script
     src="js/app.js"
     defer
   ></script>
+
 
 </body>
 </html>
