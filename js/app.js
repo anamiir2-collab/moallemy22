@@ -1,496 +1,1383 @@
-/* ============================================
-   مُعلّمي | app.js
-   التطبيق الرئيسي - App Shell, Routing, UI helpers
-   ============================================ */
+/* =========================================================
+   مُعلّمي — app.js
+   Main Application Controller
+   ========================================================= */
 
-const UI = {
-  // ===== Toast =====
-  toast(message, type = 'success', duration = 2800) {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const icons = {
-      success: '✓', error: '✕', warning: '!', info: 'i'
-    };
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<div class="toast-icon">${icons[type] || '✓'}</div><div>${message}</div>`;
-    container.appendChild(toast);
-    setTimeout(() => {
-      toast.classList.add('removing');
-      setTimeout(() => toast.remove(), 250);
-    }, duration);
-  },
+(function (global) {
+  'use strict';
 
-  // ===== Modal =====
-  modal(options = {}) {
-    const { title = '', body = '', onClose, size } = options;
-    const container = document.getElementById('modal-container');
-    const content = document.getElementById('modal-content');
-    if (!container || !content) return;
+  const App = {
+    currentPage: 'dashboard',
+    pageHistory: [],
+    initialized: false,
 
-    content.innerHTML = `
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <h3 class="modal-title">${title}</h3>
-        <button class="modal-close" aria-label="إغلاق">×</button>
-      </div>
-      <div class="modal-body">${body}</div>
-    `;
+    /* =====================================================
+       INIT
+       ===================================================== */
+    async init() {
+      try {
+        /* ---------- Storage migrations ---------- */
+        if (typeof Storage !== 'undefined' && Storage.runMigrations) {
+          Storage.runMigrations();
+        }
 
-    if (size === 'large') content.style.maxWidth = '640px';
-    else content.style.maxWidth = '';
+        /* ---------- Seed data ---------- */
+        if (typeof Seeds !== 'undefined' && Seeds.ensureSeeds) {
+          Seeds.ensureSeeds();
+        }
 
-    container.classList.remove('hidden');
+        /* ---------- Auth ---------- */
+        if (typeof Auth !== 'undefined' && Auth.init) {
+          await Auth.init();
+        }
 
-    const close = () => {
-      container.classList.add('hidden');
-      if (onClose) onClose();
-    };
+        /* ---------- Elements ---------- */
+        const splash = document.getElementById('splash-screen');
+        const app = document.getElementById('app');
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
 
-    content.querySelector('.modal-close').addEventListener('click', close);
-    document.getElementById('modal-overlay').onclick = close;
-  },
+        /* ---------- Hide splash ---------- */
+        if (splash) {
+          splash.classList.add('hidden');
+        }
 
-  closeModal() {
-    document.getElementById('modal-container').classList.add('hidden');
-  },
+        if (app) {
+          app.classList.remove('hidden');
+        }
 
-  // ===== Confirm =====
-  confirm(message, onConfirm, options = {}) {
-    const { title = 'تأكيد', confirmText = 'تأكيد', cancelText = 'إلغاء', danger = true } = options;
-    this.modal({
-      title,
-      body: `
-        <p style="color: var(--text-secondary); margin-bottom: var(--space-5); line-height: 1.6;">${message}</p>
-        <div class="action-row">
-          <button class="btn btn-secondary" id="confirm-cancel" style="flex:1">${cancelText}</button>
-          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="confirm-ok" style="flex:1">${confirmText}</button>
-        </div>
-      `,
-      onClose: () => {}
-    });
-    document.getElementById('confirm-cancel').addEventListener('click', () => this.closeModal());
-    document.getElementById('confirm-ok').addEventListener('click', () => {
-      this.closeModal();
-      if (onConfirm) onConfirm();
-    });
-  },
+        /* =================================================
+           CHECK LOGIN STATE
+           ================================================= */
+        if (typeof Auth !== 'undefined' && Auth.isLogged && Auth.isLogged()) {
+          if (authScreen) {
+            authScreen.classList.add('hidden');
+          }
 
-  // ===== Empty State =====
-  emptyState(icon, title, text, btnLabel, btnAction) {
-    const btn = btnLabel ? `<button class="btn btn-primary">${btnLabel}</button>` : '';
-    return `
-      <div class="empty-state">
-        <div class="empty-icon">${icon}</div>
-        <h3 class="empty-title">${title}</h3>
-        <p class="empty-text">${text}</p>
-        ${btn}
-      </div>
-    `;
-  },
+          if (mainApp) {
+            mainApp.classList.remove('hidden');
+          }
 
-  // ===== Helpers =====
-  formatDate(dateStr, opts = {}) {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-    const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-    if (opts.weekday) return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()];
-    if (opts.short) return d.getDate() + ' ' + months[d.getMonth()].slice(0, 3);
-    if (opts.month) return months[d.getMonth()] + ' ' + d.getFullYear();
-    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
-  },
+          await this.onAuthSuccess();
 
-  formatTime(t) {
-    if (!t) return '';
-    const [h, m] = t.split(':').map(Number);
-    const period = h >= 12 ? 'م' : 'ص';
-    const hour12 = h % 12 || 12;
-    return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
-  },
+        } else {
+          if (authScreen) {
+            authScreen.classList.remove('hidden');
+          }
 
-  relativeTime(ts) {
-    const diff = Date.now() - ts;
-    const sec = Math.floor(diff / 1000);
-    if (sec < 60) return 'الآن';
-    const min = Math.floor(sec / 60);
-    if (min < 60) return `منذ ${min} دقيقة`;
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return `منذ ${hr} ساعة`;
-    const day = Math.floor(hr / 24);
-    if (day < 7) return `منذ ${day} يوم`;
-    const week = Math.floor(day / 7);
-    if (week < 4) return `منذ ${week} أسبوع`;
-    return this.formatDate(new Date(ts).toISOString());
-  },
+          if (mainApp) {
+            mainApp.classList.add('hidden');
+          }
+        }
 
-  money(n) {
-    if (n == null || isNaN(n)) n = 0;
-    return Number(n).toLocaleString('ar-EG') + ' ج.م';
-  },
+        /* ---------- Bind global events ---------- */
+        this.bindEvents();
 
-  percent(n, total) {
-    if (!total) return '0%';
-    return Math.round((n / total) * 100) + '%';
-  },
+        /* ---------- Service Worker ---------- */
+        this.registerSW();
 
-  // ===== Avatar initials =====
-  initials(name) {
-    if (!name) return '؟';
-    const parts = name.trim().split(/\s+/);
-    return parts[0][0] + (parts[1] ? parts[1][0] : '');
-  },
+        /* ---------- URL actions ---------- */
+        this.handleUrlAction();
 
-  // ===== Status badges =====
-  studentStatus(status) {
-    const map = {
-      'نشط': 'success',
-      'متوقف': 'warning',
-      'منسحب': 'danger'
-    };
-    return `<span class="badge badge-${map[status] || ''}">${status}</span>`;
-  },
+        this.initialized = true;
 
-  lessonStatusBadge(status) {
-    const map = {
-      'مجدولة': ['info', '⏱'],
-      'تمت': ['success', '✓'],
-      'ملغاة': ['danger', '✕'],
-      'مؤجلة': ['warning', '⏰'],
-      'تعويض': ['gold', '↻']
-    };
-    const [cls, icon] = map[status] || ['info', ''];
-    return `<span class="badge badge-${cls}">${icon} ${status}</span>`;
-  },
+      } catch (error) {
+        console.error('App initialization error:', error);
 
-  paymentStatus(paid, required) {
-    if (paid >= required) return { label: 'مدفوع', cls: 'success' };
-    if (paid > 0) return { label: 'جزئي', cls: 'warning' };
-    return { label: 'غير مدفوع', cls: 'danger' };
-  },
+        const splash = document.getElementById('splash-screen');
+        const app = document.getElementById('app');
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
 
-  attendanceBadge(status) {
-    const map = {
-      'حاضر': 'success',
-      'غائب': 'danger',
-      'متأخر': 'warning',
-      'غياب بعذر': 'info'
-    };
-    return `<span class="badge badge-${map[status] || ''}">${status}</span>`;
-  },
+        if (splash) {
+          splash.classList.add('hidden');
+        }
 
-  gradePercentage(score, max) {
-    if (!max) return 0;
-    return (score / max) * 100;
-  },
+        if (app) {
+          app.classList.remove('hidden');
+        }
 
-  gradeLetter(percentage) {
-    if (percentage >= 90) return { letter: 'A', cls: 'success', label: 'ممتاز' };
-    if (percentage >= 80) return { letter: 'B', cls: 'success', label: 'جيد جدًا' };
-    if (percentage >= 70) return { letter: 'C', cls: 'warning', label: 'جيد' };
-    if (percentage >= 60) return { letter: 'D', cls: 'warning', label: 'مقبول' };
-    return { letter: 'F', cls: 'danger', label: 'ضعيف' };
-  },
+        if (authScreen) {
+          authScreen.classList.remove('hidden');
+        }
 
-  // ===== Skeleton =====
-  skeleton(count = 3) {
-    let html = '';
-    for (let i = 0; i < count; i++) {
-      html += `
-        <div class="skeleton-card" style="margin-bottom: var(--space-3);">
-          <div style="display:flex; gap: var(--space-3); align-items:center;">
-            <div class="skeleton skeleton-circle"></div>
-            <div style="flex:1;">
-              <div class="skeleton skeleton-text lg"></div>
-              <div class="skeleton skeleton-text sm"></div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    return html;
-  }
-};
-window.UI = UI;
+        if (mainApp) {
+          mainApp.classList.add('hidden');
+        }
 
-// ===== App =====
-const App = {
-  currentPage: 'dashboard',
-  pageHistory: [],
-
-  init() {
-    // ترحيل البيانات القديمة قبل أي شيء
-    if (Storage.runMigrations) Storage.runMigrations();
-    Seeds.ensureSeeds();
-    Auth.init();
-
-    // Hide splash
-    setTimeout(() => {
-      const splash = document.getElementById('splash-screen');
-      if (splash) splash.classList.add('hidden');
-      const app = document.getElementById('app');
-      if (app) app.classList.remove('hidden');
-
-      // Check auth
-      if (!Auth.isLogged()) {
-        document.getElementById('auth-screen').classList.remove('hidden');
-      } else {
-        document.getElementById('main-app').classList.remove('hidden');
-        this.onAuthSuccess();
+        if (typeof UI !== 'undefined' && UI.toast) {
+          UI.toast('حدث خطأ أثناء تشغيل التطبيق', 'error');
+        }
       }
-    }, 800);
+    },
 
-    this.bindEvents();
-    this.registerSW();
-    this.handleUrlAction();
-  },
+    /* =====================================================
+       AUTH SUCCESS
+       ===================================================== */
+    async onAuthSuccess() {
+      try {
+        const teacher =
+          typeof Auth !== 'undefined' && Auth.getTeacher
+            ? Auth.getTeacher()
+            : null;
 
-  onAuthSuccess() {
-    const teacher = Auth.getTeacher();
-    const avatar = document.getElementById('header-avatar');
-    const greeting = document.getElementById('greeting-text');
-    const dateEl = document.getElementById('greeting-date');
+        /* ---------- Screen state ---------- */
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
 
-    if (avatar && teacher) avatar.textContent = UI.initials(teacher.name);
-    if (greeting && teacher) greeting.textContent = `أهلاً يا أستاذ ${teacher.name.split(' ')[0]}`;
-    if (dateEl) {
-      const now = new Date();
-      const days = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      dateEl.textContent = `${days[now.getDay()]}، ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-    }
+        if (authScreen) {
+          authScreen.classList.add('hidden');
+        }
 
-    // Apply theme
-    const settings = Storage.get(Storage.KEYS.settings, {});
-    if (settings.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        if (mainApp) {
+          mainApp.classList.remove('hidden');
+        }
 
-    // Update notif badge
-    Notifications.updateBadge();
+        /* ---------- Teacher info ---------- */
+        if (teacher) {
+          this.updateTeacherInfo(teacher);
+        }
 
-    // توليد التنبيهات التلقائية (غياب/مدفوعات/اختبار غدًا) مع منع التكرار
-    if (Notifications.refreshAutoAlerts) Notifications.refreshAutoAlerts();
+        /* ---------- Theme ---------- */
+        if (
+          typeof Settings !== 'undefined' &&
+          Settings.applyTheme
+        ) {
+          Settings.applyTheme();
+        }
 
-    // Navigate to default page
-    this.navigate('dashboard');
-  },
+        /* ---------- Notifications ---------- */
+        if (
+          typeof Notifications !== 'undefined' &&
+          Notifications.refresh
+        ) {
+          try {
+            await Notifications.refresh();
+          } catch (error) {
+            console.warn('Notifications refresh failed:', error);
+          }
+        }
 
-  bindEvents() {
-    // Bottom nav
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const page = item.dataset.page;
+        /* ---------- Navigate dashboard ---------- */
+        this.navigate('dashboard', false);
+
+      } catch (error) {
+        console.error('onAuthSuccess error:', error);
+      }
+    },
+
+    /* =====================================================
+       UPDATE TEACHER INFO
+       ===================================================== */
+    updateTeacherInfo(teacher) {
+      if (!teacher) return;
+
+      const name =
+        teacher.name ||
+        teacher.full_name ||
+        teacher.fullName ||
+        'المعلم';
+
+      const avatar =
+        teacher.avatar ||
+        teacher.avatar_url ||
+        teacher.photo ||
+        '';
+
+      /* ---------- Teacher names ---------- */
+      document.querySelectorAll('[data-teacher-name]').forEach(el => {
+        el.textContent = name;
+      });
+
+      document.querySelectorAll('.teacher-name').forEach(el => {
+        el.textContent = name;
+      });
+
+      /* ---------- Avatar ---------- */
+      document.querySelectorAll('[data-teacher-avatar]').forEach(el => {
+        if (avatar) {
+          el.src = avatar;
+          el.classList.remove('hidden');
+        }
+      });
+
+      document.querySelectorAll('.teacher-avatar').forEach(el => {
+        if (avatar) {
+          el.src = avatar;
+        }
+      });
+
+      /* ---------- Greeting ---------- */
+      const greeting = document.querySelector('[data-greeting]');
+
+      if (greeting) {
+        const hour = new Date().getHours();
+
+        let text = 'أهلاً وسهلاً';
+
+        if (hour >= 5 && hour < 12) {
+          text = 'صباح الخير';
+        } else if (hour >= 12 && hour < 18) {
+          text = 'مساء الخير';
+        } else {
+          text = 'مساء الخير';
+        }
+
+        greeting.textContent = text;
+      }
+
+      /* ---------- Date ---------- */
+      const dateElement =
+        document.querySelector('[data-current-date]');
+
+      if (dateElement) {
+        dateElement.textContent =
+          new Intl.DateTimeFormat('ar-EG', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          }).format(new Date());
+      }
+    },
+
+    /* =====================================================
+       BIND EVENTS
+       ===================================================== */
+    bindEvents() {
+      /* ---------- Bottom navigation ---------- */
+      document.addEventListener('click', event => {
+        const navButton =
+          event.target.closest('[data-page]');
+
+        if (!navButton) return;
+
+        const page = navButton.dataset.page;
+
+        if (!page) return;
+
+        event.preventDefault();
+
         this.navigate(page);
       });
-    });
 
-    // Header buttons
-    document.getElementById('header-notif-btn')?.addEventListener('click', () => {
-      this.navigate('notifications');
-    });
-    document.getElementById('header-search-btn')?.addEventListener('click', () => {
-      this.openGlobalSearch();
-    });
+      /* ---------- Back buttons ---------- */
+      document.addEventListener('click', event => {
+        const backButton =
+          event.target.closest('[data-action="back"]');
 
-    // Install banner
-    document.getElementById('install-close')?.addEventListener('click', () => {
-      document.getElementById('install-banner').classList.add('hidden');
-      Storage.set(Storage.KEYS.installDismissed, { date: Date.now() });
-    });
+        if (!backButton) return;
 
-    document.getElementById('install-btn')?.addEventListener('click', () => {
-      if (this.deferredPrompt) {
-        this.deferredPrompt.prompt();
-        this.deferredPrompt.userChoice.then(() => {
-          this.deferredPrompt = null;
-          document.getElementById('install-banner').classList.add('hidden');
+        event.preventDefault();
+
+        this.goBack();
+      });
+
+      /* ---------- Header buttons ---------- */
+      const notificationButton =
+        document.querySelector('[data-action="notifications"]');
+
+      if (notificationButton) {
+        notificationButton.addEventListener('click', () => {
+          this.navigate('notifications');
         });
       }
-    });
 
-    document.getElementById('update-btn')?.addEventListener('click', () => {
-      if (this.swRegistration && this.swRegistration.waiting) {
-        this.swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      const profileButton =
+        document.querySelector('[data-action="profile"]');
+
+      if (profileButton) {
+        profileButton.addEventListener('click', () => {
+          this.navigate('profile');
+        });
       }
-      window.location.reload();
-    });
 
-    // PWA install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-      this.maybeShowInstallBanner();
-    });
+      /* ---------- Install button ---------- */
+      const installButton =
+        document.querySelector('[data-action="install"]');
 
-    // Hardware back button (Android)
-    window.addEventListener('popstate', (e) => {
-      if (this.pageHistory.length > 0) {
-        const prev = this.pageHistory.pop();
-        this.navigate(prev, true);
+      if (installButton) {
+        installButton.addEventListener('click', () => {
+          this.showInstallPrompt();
+        });
       }
-    });
-  },
 
-  navigate(page, skipHistory = false) {
-    if (!skipHistory && this.currentPage && this.currentPage !== page) {
-      this.pageHistory.push(this.currentPage);
-    }
-    this.currentPage = page;
+      /* ---------- Update button ---------- */
+      const updateButton =
+        document.querySelector('[data-action="update"]');
 
-    // Update nav active state
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.classList.toggle('active', item.dataset.page === page);
-    });
+      if (updateButton) {
+        updateButton.addEventListener('click', () => {
+          window.location.reload();
+        });
+      }
 
-    const container = document.getElementById('page-container');
-    if (!container) return;
+      /* ---------- PWA install ---------- */
+      window.addEventListener(
+        'beforeinstallprompt',
+        event => {
+          event.preventDefault();
 
-    // Show skeleton briefly for perceived performance
-    container.innerHTML = `<div class="page" style="min-height: 50vh;">${UI.skeleton(4)}</div>`;
-    container.scrollTop = 0;
+          this.deferredInstallPrompt = event;
 
-    // Use setTimeout to allow skeleton render
-    setTimeout(() => {
-      const renderer = this.pages[page];
-      if (renderer) {
-        const html = renderer.call(this);
-        // الصفحات التي ترسم نفسها (مثل profile) تعيد undefined - نحافظ على رسمها
-        if (html !== undefined && html !== null) {
-          container.innerHTML = `<div class="page">${html}</div>`;
-          // Bind events for the new page
-          const binder = this.pageBinds[page];
-          if (binder) binder.call(this);
+          const banner =
+            document.getElementById('install-banner');
+
+          if (banner) {
+            banner.classList.remove('hidden');
+          }
         }
-      } else {
-        container.innerHTML = `<div class="page">${UI.emptyState(Icons.get('search', 36), 'الصفحة غير موجودة', 'تأكد من الرابط')}</div>`;
-      }
-    }, 50);
-  },
+      );
 
-  pages: {
-    dashboard: () => Dashboard.render(),
-    students: () => Students.render(),
-    profile: () => Students.renderProfilePage(),
-    needs: () => Dashboard.renderNeeds(),
-    groups: () => Groups.render(),
-    calendar: () => Calendar.render(),
-    more: () => App.renderMore(),
-    lessons: () => Lessons.render(),
-    attendance: () => Attendance.render(),
-    assignments: () => Assignments.render(),
-    exams: () => Exams.render(),
-    payments: () => Payments.render(),
-    reports: () => Reports.render(),
-    notifications: () => Notifications.render(),
-    settings: () => Settings.render()
-  },
+      /* ---------- Browser navigation ---------- */
+      window.addEventListener('popstate', () => {
+        const page =
+          history.state?.page || 'dashboard';
 
-  pageBinds: {
-    dashboard: () => Dashboard.bind(),
-    students: () => Students.bind(),
-    profile: () => Dashboard.bindNeeds(),
-    needs: () => Dashboard.bindNeeds(),
-    groups: () => Groups.bind(),
-    calendar: () => Calendar.bind(),
-    more: () => App.bindMore(),
-    lessons: () => Lessons.bind(),
-    attendance: () => Attendance.bind(),
-    assignments: () => Assignments.bind(),
-    exams: () => Exams.bind(),
-    payments: () => Payments.bind(),
-    reports: () => Reports.bind(),
-    notifications: () => Notifications.bind(),
-    settings: () => Settings.bind()
-  },
-
-  renderMore() {
-    const items = [
-      { id: 'lessons', icon: 'lessons', title: 'الحصص', desc: 'إدارة الجدول والحصص', color: 'info' },
-      { id: 'attendance', icon: 'attendance', title: 'الحضور', desc: 'تسجيل ومتابعة الحضور', color: 'success' },
-      { id: 'needs', icon: 'warn', title: 'يحتاج متابعة', desc: 'طلاب بمؤشرات سلبية', color: 'danger' },
-      { id: 'exams', icon: 'exam', title: 'الاختبارات', desc: 'الاختبارات والدرجات', color: 'warning' },
-      { id: 'assignments', icon: 'assignment', title: 'الواجبات', desc: 'تكليف ومتابعة الواجبات', color: 'info' },
-      { id: 'payments', icon: 'payment', title: 'المدفوعات', desc: 'الإيصالات والتقارير المالية', color: 'gold' },
-      { id: 'reports', icon: 'report', title: 'التقارير', desc: 'تقارير الطلاب والمجموعات', color: '' },
-      { id: 'notifications', icon: 'bell', title: 'الإشعارات', desc: 'التنبيهات والإعلانات', color: 'danger' },
-      { id: 'settings', icon: 'settings', title: 'الإعدادات', desc: 'الحساب والأمان والنسخ', color: '' }
-    ];
-
-    return `
-      <div class="page-header">
-        <h1 class="page-title">المزيد</h1>
-        <p class="page-subtitle">جميع أدوات التطبيق</p>
-      </div>
-      <div class="list stagger">
-        ${items.map(item => `
-          <div class="list-item clickable" data-nav="${item.id}">
-            <div class="quick-action-icon ${item.color}">${Icons.get(item.icon, 20)}</div>
-            <div class="list-item-body">
-              <div class="list-item-title">${item.title}</div>
-              <div class="list-item-subtitle">${item.desc}</div>
-            </div>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  },
-
-  bindMore() {
-    document.querySelectorAll('[data-nav]').forEach(el => {
-      el.addEventListener('click', () => this.navigate(el.dataset.nav));
-    });
-  },
-
-  openGlobalSearch() {
-    GlobalSearch.open();
-  },
-
-  maybeShowInstallBanner() {
-    const dismissed = Storage.get(Storage.KEYS.installDismissed);
-    // Don't show if dismissed in last 14 days
-    if (dismissed && (Date.now() - dismissed.date) < 14 * 86400000) return;
-    // Don't show if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-    setTimeout(() => {
-      document.getElementById('install-banner').classList.remove('hidden');
-    }, 3000);
-  },
-
-  registerSW() {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').then(reg => {
-          this.swRegistration = reg;
-          // Check for updates
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                document.getElementById('update-banner').classList.remove('hidden');
-              }
-            });
-          });
-        }).catch(err => console.warn('SW registration failed:', err));
+        this.renderPage(page, false);
       });
-    }
-  },
+    },
 
-  handleUrlAction() {
-    const params = new URLSearchParams(window.location.search);
-    const action = params.get('action');
-    if (action === 'add-student' && Auth.isLogged()) {
-      setTimeout(() => Students.openAddForm(), 1500);
-    } else if (action === 'quick-attendance' && Auth.isLogged()) {
-      setTimeout(() => Attendance.openQuick(), 1500);
-    } else if (action === 'quick-payment' && Auth.isLogged()) {
-      setTimeout(() => Payments.openQuick(), 1500);
+    /* =====================================================
+       NAVIGATE
+       ===================================================== */
+    navigate(page, addHistory = true) {
+      if (!page) {
+        page = 'dashboard';
+      }
+
+      if (addHistory && this.currentPage !== page) {
+        this.pageHistory.push(this.currentPage);
+
+        try {
+          history.pushState(
+            { page },
+            '',
+            `#${page}`
+          );
+        } catch (error) {
+          console.warn('History error:', error);
+        }
+      }
+
+      this.currentPage = page;
+
+      this.renderPage(page, addHistory);
+    },
+
+    /* =====================================================
+       RENDER PAGE
+       ===================================================== */
+    renderPage(page) {
+      const container =
+        document.getElementById('page-content') ||
+        document.getElementById('main-content') ||
+        document.querySelector('.page-content');
+
+      if (!container) {
+        console.warn('Page container not found');
+        return;
+      }
+
+      /* ---------- Update nav ---------- */
+      document
+        .querySelectorAll('[data-page]')
+        .forEach(button => {
+          const buttonPage =
+            button.dataset.page;
+
+          button.classList.toggle(
+            'active',
+            buttonPage === page
+          );
+        });
+
+      /* =================================================
+         PAGE MODULES
+         ================================================= */
+
+      try {
+        switch (page) {
+
+          /* ---------- Dashboard ---------- */
+          case 'dashboard':
+          case 'home':
+
+            if (
+              typeof Dashboard !== 'undefined' &&
+              Dashboard.render
+            ) {
+              Dashboard.render(container);
+            }
+
+            break;
+
+          /* ---------- Students ---------- */
+          case 'students':
+
+            if (
+              typeof Students !== 'undefined' &&
+              Students.render
+            ) {
+              Students.render(container);
+            }
+
+            break;
+
+          /* ---------- Profile ---------- */
+          case 'profile':
+
+            if (
+              typeof Profile !== 'undefined' &&
+              Profile.render
+            ) {
+              Profile.render(container);
+            }
+
+            break;
+
+          /* ---------- Needs ---------- */
+          case 'needs':
+
+            if (
+              typeof Students !== 'undefined' &&
+              Students.renderNeeds
+            ) {
+              Students.renderNeeds(container);
+            }
+
+            break;
+
+          /* ---------- Groups ---------- */
+          case 'groups':
+
+            if (
+              typeof Groups !== 'undefined' &&
+              Groups.render
+            ) {
+              Groups.render(container);
+            }
+
+            break;
+
+          /* ---------- Calendar ---------- */
+          case 'calendar':
+
+            if (
+              typeof Calendar !== 'undefined' &&
+              Calendar.render
+            ) {
+              Calendar.render(container);
+            }
+
+            break;
+
+          /* ---------- Lessons ---------- */
+          case 'lessons':
+
+            if (
+              typeof Lessons !== 'undefined' &&
+              Lessons.render
+            ) {
+              Lessons.render(container);
+            }
+
+            break;
+
+          /* ---------- Attendance ---------- */
+          case 'attendance':
+
+            if (
+              typeof Attendance !== 'undefined' &&
+              Attendance.render
+            ) {
+              Attendance.render(container);
+            }
+
+            break;
+
+          /* ---------- Assignments ---------- */
+          case 'assignments':
+
+            if (
+              typeof Assignments !== 'undefined' &&
+              Assignments.render
+            ) {
+              Assignments.render(container);
+            }
+
+            break;
+
+          /* ---------- Exams ---------- */
+          case 'exams':
+
+            if (
+              typeof Exams !== 'undefined' &&
+              Exams.render
+            ) {
+              Exams.render(container);
+            }
+
+            break;
+
+          /* ---------- Payments ---------- */
+          case 'payments':
+
+            if (
+              typeof Payments !== 'undefined' &&
+              Payments.render
+            ) {
+              Payments.render(container);
+            }
+
+            break;
+
+          /* ---------- Reports ---------- */
+          case 'reports':
+
+            if (
+              typeof Reports !== 'undefined' &&
+              Reports.render
+            ) {
+              Reports.render(container);
+            }
+
+            break;
+
+          /* ---------- Notifications ---------- */
+          case 'notifications':
+
+            if (
+              typeof Notifications !== 'undefined' &&
+              Notifications.render
+            ) {
+              Notifications.render(container);
+            }
+
+            break;
+
+          /* ---------- Settings ---------- */
+          case 'settings':
+
+            if (
+              typeof Settings !== 'undefined' &&
+              Settings.render
+            ) {
+              Settings.render(container);
+            }
+
+            break;
+
+          /* ---------- More ---------- */
+          case 'more':
+
+            this.renderMore(container);
+
+            break;
+
+          /* ---------- Default ---------- */
+          default:
+
+            this.navigate('dashboard', false);
+
+            break;
+        }
+
+      } catch (error) {
+        console.error(
+          `Error rendering page "${page}":`,
+          error
+        );
+
+        if (typeof UI !== 'undefined' && UI.emptyState) {
+          container.innerHTML = UI.emptyState(
+            'حدث خطأ',
+            'تعذر تحميل الصفحة'
+          );
+        }
+      }
+
+      /* ---------- Page bindings ---------- */
+      this.bindPageEvents(page);
+    },
+
+    /* =====================================================
+       PAGE EVENTS
+       ===================================================== */
+    bindPageEvents(page) {
+      try {
+        switch (page) {
+
+          case 'dashboard':
+
+            if (
+              typeof Dashboard !== 'undefined' &&
+              Dashboard.bindEvents
+            ) {
+              Dashboard.bindEvents();
+            }
+
+            break;
+
+          case 'students':
+
+            if (
+              typeof Students !== 'undefined' &&
+              Students.bindEvents
+            ) {
+              Students.bindEvents();
+            }
+
+            break;
+
+          case 'profile':
+
+            if (
+              typeof Profile !== 'undefined' &&
+              Profile.bindEvents
+            ) {
+              Profile.bindEvents();
+            }
+
+            break;
+
+          case 'groups':
+
+            if (
+              typeof Groups !== 'undefined' &&
+              Groups.bindEvents
+            ) {
+              Groups.bindEvents();
+            }
+
+            break;
+
+          case 'calendar':
+
+            if (
+              typeof Calendar !== 'undefined' &&
+              Calendar.bindEvents
+            ) {
+              Calendar.bindEvents();
+            }
+
+            break;
+
+          case 'lessons':
+
+            if (
+              typeof Lessons !== 'undefined' &&
+              Lessons.bindEvents
+            ) {
+              Lessons.bindEvents();
+            }
+
+            break;
+
+          case 'attendance':
+
+            if (
+              typeof Attendance !== 'undefined' &&
+              Attendance.bindEvents
+            ) {
+              Attendance.bindEvents();
+            }
+
+            break;
+
+          case 'assignments':
+
+            if (
+              typeof Assignments !== 'undefined' &&
+              Assignments.bindEvents
+            ) {
+              Assignments.bindEvents();
+            }
+
+            break;
+
+          case 'exams':
+
+            if (
+              typeof Exams !== 'undefined' &&
+              Exams.bindEvents
+            ) {
+              Exams.bindEvents();
+            }
+
+            break;
+
+          case 'payments':
+
+            if (
+              typeof Payments !== 'undefined' &&
+              Payments.bindEvents
+            ) {
+              Payments.bindEvents();
+            }
+
+            break;
+
+          case 'reports':
+
+            if (
+              typeof Reports !== 'undefined' &&
+              Reports.bindEvents
+            ) {
+              Reports.bindEvents();
+            }
+
+            break;
+
+          case 'notifications':
+
+            if (
+              typeof Notifications !== 'undefined' &&
+              Notifications.bindEvents
+            ) {
+              Notifications.bindEvents();
+            }
+
+            break;
+
+          case 'settings':
+
+            if (
+              typeof Settings !== 'undefined' &&
+              Settings.bindEvents
+            ) {
+              Settings.bindEvents();
+            }
+
+            break;
+
+          case 'more':
+
+            this.bindMore();
+
+            break;
+        }
+
+      } catch (error) {
+        console.error(
+          `Page binding error "${page}":`,
+          error
+        );
+      }
+    },
+
+    /* =====================================================
+       MORE PAGE
+       ===================================================== */
+    renderMore(container) {
+      container.innerHTML = `
+        <div class="page-header">
+          <div>
+            <h1>المزيد</h1>
+            <p>إدارة التطبيق والإعدادات</p>
+          </div>
+        </div>
+
+        <div class="more-grid">
+
+          <button class="more-card" data-page="profile">
+            <div class="more-card-icon">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div>
+              <strong>الملف الشخصي</strong>
+              <span>بيانات المعلم</span>
+            </div>
+          </button>
+
+          <button class="more-card" data-page="reports">
+            <div class="more-card-icon">
+              <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <div>
+              <strong>التقارير</strong>
+              <span>تقارير الطلاب والأداء</span>
+            </div>
+          </button>
+
+          <button class="more-card" data-page="payments">
+            <div class="more-card-icon">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div>
+              <strong>المدفوعات</strong>
+              <span>متابعة الحسابات</span>
+            </div>
+          </button>
+
+          <button class="more-card" data-page="settings">
+            <div class="more-card-icon">
+              <i class="fa-solid fa-gear"></i>
+            </div>
+            <div>
+              <strong>الإعدادات</strong>
+              <span>إعدادات التطبيق</span>
+            </div>
+          </button>
+
+          <button class="more-card" data-action="backup">
+            <div class="more-card-icon">
+              <i class="fa-solid fa-database"></i>
+            </div>
+            <div>
+              <strong>النسخ الاحتياطي</strong>
+              <span>حفظ واستعادة البيانات</span>
+            </div>
+          </button>
+
+        </div>
+      `;
+    },
+
+    /* =====================================================
+       MORE EVENTS
+       ===================================================== */
+    bindMore() {
+      document
+        .querySelectorAll('.more-card')
+        .forEach(card => {
+
+          card.addEventListener('click', () => {
+
+            const page =
+              card.dataset.page;
+
+            const action =
+              card.dataset.action;
+
+            if (page) {
+              this.navigate(page);
+              return;
+            }
+
+            if (action === 'backup') {
+
+              if (
+                typeof Backup !== 'undefined' &&
+                Backup.render
+              ) {
+                this.navigate('settings');
+              }
+            }
+          });
+        });
+    },
+
+    /* =====================================================
+       BACK
+       ===================================================== */
+    goBack() {
+      if (this.pageHistory.length > 0) {
+
+        const previous =
+          this.pageHistory.pop();
+
+        this.navigate(previous, false);
+
+        return;
+      }
+
+      this.navigate('dashboard', false);
+    },
+
+    /* =====================================================
+       GLOBAL SEARCH
+       ===================================================== */
+    openSearch() {
+      if (
+        typeof Search !== 'undefined' &&
+        Search.open
+      ) {
+        Search.open();
+      }
+    },
+
+    /* =====================================================
+       INSTALL PWA
+       ===================================================== */
+    async showInstallPrompt() {
+      if (!this.deferredInstallPrompt) {
+        if (typeof UI !== 'undefined' && UI.toast) {
+          UI.toast(
+            'التطبيق مثبت بالفعل أو غير متاح للتثبيت حالياً',
+            'info'
+          );
+        }
+
+        return;
+      }
+
+      try {
+        await this.deferredInstallPrompt.prompt();
+
+        const result =
+          await this.deferredInstallPrompt.userChoice;
+
+        console.log(
+          'Install result:',
+          result
+        );
+
+        this.deferredInstallPrompt = null;
+
+        const banner =
+          document.getElementById('install-banner');
+
+        if (banner) {
+          banner.classList.add('hidden');
+        }
+
+      } catch (error) {
+        console.error(
+          'Install prompt error:',
+          error
+        );
+      }
+    },
+
+    /* =====================================================
+       SERVICE WORKER
+       ===================================================== */
+    registerSW() {
+      if (!('serviceWorker' in navigator)) {
+        return;
+      }
+
+      window.addEventListener(
+        'load',
+        () => {
+
+          navigator.serviceWorker
+            .register('./service-worker.js')
+            .then(registration => {
+
+              console.log(
+                'Service Worker registered:',
+                registration.scope
+              );
+
+              registration.addEventListener(
+                'updatefound',
+                () => {
+
+                  const newWorker =
+                    registration.installing;
+
+                  if (!newWorker) return;
+
+                  newWorker.addEventListener(
+                    'statechange',
+                    () => {
+
+                      if (
+                        newWorker.state === 'installed' &&
+                        navigator.serviceWorker.controller
+                      ) {
+
+                        const updateBanner =
+                          document.getElementById(
+                            'update-banner'
+                          );
+
+                        if (updateBanner) {
+                          updateBanner.classList.remove(
+                            'hidden'
+                          );
+                        }
+                      }
+                    }
+                  );
+                }
+              );
+
+            })
+            .catch(error => {
+              console.warn(
+                'Service Worker registration failed:',
+                error
+              );
+            });
+        }
+      );
+    },
+
+    /* =====================================================
+       URL ACTIONS
+       ===================================================== */
+    handleUrlAction() {
+      const hash =
+        window.location.hash;
+
+      if (!hash) {
+        return;
+      }
+
+      const page =
+        hash.replace('#', '').trim();
+
+      if (!page) {
+        return;
+      }
+
+      const allowedPages = [
+        'dashboard',
+        'home',
+        'students',
+        'profile',
+        'needs',
+        'groups',
+        'calendar',
+        'more',
+        'lessons',
+        'attendance',
+        'assignments',
+        'exams',
+        'payments',
+        'reports',
+        'notifications',
+        'settings'
+      ];
+
+      if (allowedPages.includes(page)) {
+        this.currentPage = page;
+      }
     }
+  };
+
+  /* =========================================================
+     UI
+     ========================================================= */
+
+  const UI = {
+
+    /* ---------- Toast ---------- */
+    toast(message, type = 'info') {
+
+      let container =
+        document.getElementById('toast-container');
+
+      if (!container) {
+
+        container =
+          document.createElement('div');
+
+        container.id =
+          'toast-container';
+
+        document.body.appendChild(container);
+      }
+
+      const toast =
+        document.createElement('div');
+
+      toast.className =
+        `toast toast-${type}`;
+
+      toast.textContent =
+        message;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.add('show');
+      });
+
+      setTimeout(() => {
+
+        toast.classList.remove('show');
+
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+
+      }, 3000);
+    },
+
+    /* ---------- Modal ---------- */
+    modal(options = {}) {
+
+      const {
+        title = '',
+        content = '',
+        buttons = []
+      } = options;
+
+      const overlay =
+        document.createElement('div');
+
+      overlay.className =
+        'modal-overlay';
+
+      const modal =
+        document.createElement('div');
+
+      modal.className =
+        'modal';
+
+      modal.innerHTML = `
+        <div class="modal-header">
+          <h3>${title}</h3>
+          <button class="modal-close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          ${content}
+        </div>
+
+        <div class="modal-footer"></div>
+      `;
+
+      overlay.appendChild(modal);
+
+      document.body.appendChild(overlay);
+
+      const close =
+        () => overlay.remove();
+
+      modal
+        .querySelector('.modal-close')
+        .addEventListener(
+          'click',
+          close
+        );
+
+      const footer =
+        modal.querySelector('.modal-footer');
+
+      buttons.forEach(button => {
+
+        const btn =
+          document.createElement('button');
+
+        btn.className =
+          `btn ${button.class || ''}`;
+
+        btn.textContent =
+          button.text || 'إغلاق';
+
+        btn.addEventListener(
+          'click',
+          async () => {
+
+            if (button.onClick) {
+              await button.onClick();
+            }
+
+            if (button.close !== false) {
+              close();
+            }
+          }
+        );
+
+        footer.appendChild(btn);
+      });
+
+      return {
+        close
+      };
+    },
+
+    /* ---------- Confirm ---------- */
+    confirm(
+      message,
+      onConfirm,
+      options = {}
+    ) {
+
+      const title =
+        options.title || 'تأكيد';
+
+      this.modal({
+        title,
+
+        content: `
+          <div class="confirm-message">
+            ${message}
+          </div>
+        `,
+
+        buttons: [
+          {
+            text: 'إلغاء',
+            class: 'btn-secondary'
+          },
+
+          {
+            text: 'تأكيد',
+            class: 'btn-primary',
+
+            onClick: async () => {
+
+              if (onConfirm) {
+                await onConfirm();
+              }
+
+            }
+          }
+        ]
+      });
+    },
+
+    /* ---------- Empty state ---------- */
+    emptyState(
+      title = 'لا توجد بيانات',
+      message = ''
+    ) {
+
+      return `
+        <div class="empty-state">
+
+          <div class="empty-state-icon">
+            <i class="fa-regular fa-folder-open"></i>
+          </div>
+
+          <h3>${title}</h3>
+
+          ${
+            message
+              ? `<p>${message}</p>`
+              : ''
+          }
+
+        </div>
+      `;
+    },
+
+    /* ---------- Format number ---------- */
+    number(value) {
+
+      if (
+        value === null ||
+        value === undefined ||
+        value === ''
+      ) {
+        return '0';
+      }
+
+      return new Intl.NumberFormat(
+        'ar-EG'
+      ).format(Number(value) || 0);
+    },
+
+    /* ---------- Format currency ---------- */
+    currency(value) {
+
+      return new Intl.NumberFormat(
+        'ar-EG',
+        {
+          style: 'currency',
+          currency: 'EGP',
+          maximumFractionDigits: 0
+        }
+      ).format(
+        Number(value) || 0
+      );
+    },
+
+    /* ---------- Format date ---------- */
+    date(value) {
+
+      if (!value) {
+        return '-';
+      }
+
+      const date =
+        new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return new Intl.DateTimeFormat(
+        'ar-EG',
+        {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }
+      ).format(date);
+    },
+
+    /* ---------- Format time ---------- */
+    time(value) {
+
+      if (!value) {
+        return '-';
+      }
+
+      const date =
+        new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return new Intl.DateTimeFormat(
+        'ar-EG',
+        {
+          hour: 'numeric',
+          minute: '2-digit'
+        }
+      ).format(date);
+    },
+
+    /* ---------- Badge ---------- */
+    badge(text, type = 'default') {
+
+      return `
+        <span class="badge badge-${type}">
+          ${text}
+        </span>
+      `;
+    },
+
+    /* ---------- Skeleton ---------- */
+    skeleton(count = 3) {
+
+      return Array
+        .from(
+          { length: count },
+          () => `
+            <div class="skeleton skeleton-card"></div>
+          `
+        )
+        .join('');
+    }
+  };
+
+  /* =========================================================
+     GLOBAL EXPORT
+     ========================================================= */
+
+  global.App = App;
+  global.UI = UI;
+
+  /* =========================================================
+     DOM READY
+     ========================================================= */
+
+  if (
+    document.readyState === 'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => {
+        App.init();
+      }
+    );
+
+  } else {
+
+    App.init();
+
   }
-};
 
-// Initialize when DOM ready
-document.addEventListener('DOMContentLoaded', () => App.init());
-
-window.App = App;
+})(window);
