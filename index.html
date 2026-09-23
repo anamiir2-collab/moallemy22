@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#8B5E34" />
+  <meta name="description" content="مُعلّمي - نظام إدارة متكامل للمدرسين في مصر: الطلاب، المجموعات، الحصص، الحضور، المدفوعات، التقارير" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="مُعلّمي" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png" />
+
+  <title>مُعلّمي | Moallemy</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/reports.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/print.css" media="print" />
+
+  <!-- Chart.js CDN -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+    defer
+  ></script>
+</head>
+
+<body>
+
+  <!-- ============================= -->
+  <!-- Splash / Loading -->
+  <!-- ============================= -->
+
+  <div id="splash-screen" class="splash-screen">
+
+    <div class="splash-logo">
+
+      <div class="splash-icon">
+        <img
+          src="assets/icons/icon-192.png"
+          alt="مُعلّمي"
+        />
+      </div>
+
+      <div class="splash-text">
+        <h1>مُعلّمي</h1>
+        <p>Moallemy</p>
+      </div>
+
+    </div>
+
+    <div class="splash-loader">
+      <span></span>
+    </div>
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- App Root -->
+  <!-- ============================= -->
+
+  <div id="app" class="app hidden">
+
+
+    <!-- ============================= -->
+    <!-- Onboarding / Auth -->
+    <!-- ============================= -->
+
+    <section id="auth-screen" class="auth-screen hidden">
+
+      <div class="auth-container">
+
+        <div class="auth-hero">
+
+          <div class="auth-logo">
+
+            <div class="logo-mark">
+              <img
+                src="assets/icons/icon-192.png"
+                alt="مُعلّمي"
+              />
+            </div>
+
+          </div>
+
+          <h1>مُعلّمي</h1>
+
+          <p class="auth-tagline">
+            كل دروسك وطلابك في مكان واحد
+          </p>
+
+        </div>
+
+
+        <!-- Auth Tabs -->
+
+        <div class="auth-tabs">
+
+          <button
+            class="auth-tab active"
+            data-tab="login"
+          >
+            تسجيل الدخول
+          </button>
+
+          <button
+            class="auth-tab"
+            data-tab="register"
+          >
+            إنشاء حساب
+          </button>
+
+        </div>
+
+
+        <!-- ============================= -->
+        <!-- Login Form -->
+        <!-- ============================= -->
+
+        <form
+          id="login-form"
+          class="auth-form active"
+          autocomplete="off"
+        >
+
+          <div class="field">
+
+            <label for="login-phone">
+              رقم الهاتف
+            </label>
+
+            <input
+              type="tel"
+              id="login-phone"
+              inputmode="numeric"
+              placeholder="01xxxxxxxxx"
+              required
+            />
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="login-pin">
+              رمز المرور (PIN)
+            </label>
+
+            <input
+              type="password"
+              id="login-pin"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="••••"
+              required
+            />
+
+          </div>
+
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+          >
+            دخول
+          </button>
+
+        </form>
+
+
+        <!-- ============================= -->
+        <!-- Register Form -->
+        <!-- ============================= -->
+
+        <form
+          id="register-form"
+          class="auth-form"
+          autocomplete="off"
+        >
+
+          <div class="field">
+
+            <label for="reg-name">
+              اسم المدرس *
+            </label>
+
+            <input
+              type="text"
+              id="reg-name"
+              placeholder="مثال: أ/ أحمد محمد"
+              required
+            />
+
+          </div>
+
+
+          <div class="field-row">
+
+            <div class="field">
+
+              <label for="reg-subject">
+                المادة الأساسية *
+              </label>
+
+              <select
+                id="reg-subject"
+                required
+              ></select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="reg-stage">
+                المرحلة التعليمية
+              </label>
+
+              <select
+                id="reg-stage"
+              ></select>
+
+            </div>
+
+          </div>
+
+
+          <div class="field-row">
+
+            <div class="field">
+
+              <label for="reg-gov">
+                المحافظة
+              </label>
+
+              <select
+                id="reg-gov"
+              ></select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="reg-phone">
+                رقم الهاتف *
+              </label>
+
+              <input
+                type="tel"
+                id="reg-phone"
+                inputmode="numeric"
+                placeholder="01xxxxxxxxx"
+                required
+              />
+
+            </div>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="reg-email">
+              البريد الإلكتروني (اختياري)
+            </label>
+
+            <input
+              type="email"
+              id="reg-email"
+              placeholder="email@example.com"
+            />
+
+          </div>
+
+
+          <div class="field-row">
+
+            <div class="field">
+
+              <label for="reg-pin">
+                رمز المرور (PIN) *
+              </label>
+
+              <input
+                type="password"
+                id="reg-pin"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="4-6 أرقام"
+                required
+              />
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="reg-pin2">
+                تأكيد PIN *
+              </label>
+
+              <input
+                type="password"
+                id="reg-pin2"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="••••"
+                required
+              />
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+          >
+            إنشاء الحساب
+          </button>
+
+        </form>
+
+
+        <!-- Demo -->
+
+        <button
+          id="try-demo"
+          class="btn btn-text btn-block"
+        >
+          تجربة التطبيق (بيانات تجريبية)
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ============================= -->
+    <!-- Main App -->
+    <!-- ============================= -->
+
+    <main
+      id="main-app"
+      class="main-app hidden"
+    >
+
+
+      <!-- ============================= -->
+      <!-- Top Header -->
+      <!-- ============================= -->
+
+      <header class="app-header">
+
+        <div class="header-content">
+
+          <div class="header-user">
+
+            <div
+              class="header-avatar"
+              id="header-avatar"
+            >
+              أ
+            </div>
+
+            <div class="header-greeting">
+
+              <p
+                class="greeting-text"
+                id="greeting-text"
+              >
+                أهلاً بك
+              </p>
+
+              <p
+                class="greeting-date"
+                id="greeting-date"
+              ></p>
+
+            </div>
+
+          </div>
+
+
+          <div class="header-actions">
+
+            <!-- Search -->
+
+            <button
+              class="icon-btn"
+              id="header-search-btn"
+              aria-label="بحث"
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                />
+
+                <path
+                  d="m21 21-4.3-4.3"
+                />
+              </svg>
+
+            </button>
+
+
+            <!-- Notifications -->
+
+            <button
+              class="icon-btn"
+              id="header-notif-btn"
+              aria-label="الإشعارات"
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+
+                <path
+                  d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+                />
+
+                <path
+                  d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+                />
+
+              </svg>
+
+              <span
+                class="badge"
+                id="notif-badge"
+                hidden
+              >
+                0
+              </span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </header>
+
+
+      <!-- ============================= -->
+      <!-- Page Container -->
+      <!-- ============================= -->
+
+      <div
+        id="page-container"
+        class="page-container"
+      ></div>
+
+
+      <!-- ============================= -->
+      <!-- Bottom Navigation -->
+      <!-- ============================= -->
+
+      <nav
+        class="bottom-nav"
+        id="bottom-nav"
+      >
+
+        <!-- Dashboard -->
+
+        <button
+          class="nav-item active"
+          data-page="dashboard"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+
+            <path
+              d="M3 12 12 3l9 9"
+            />
+
+            <path
+              d="M5 10v10h14V10"
+            />
+
+          </svg>
+
+          <span>
+            الرئيسية
+          </span>
+
+        </button>
+
+
+        <!-- Students -->
+
+        <button
+          class="nav-item"
+          data-page="students"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+
+            <path
+              d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+            />
+
+            <circle
+              cx="9"
+              cy="7"
+              r="4"
+            />
+
+            <path
+              d="M22 21v-2a4 4 0 0 0-3-3.87"
+            />
+
+            <path
+              d="M16 3.13a4 4 0 0 1 0 7.75"
+            />
+
+          </svg>
+
+          <span>
+            الطلاب
+          </span>
+
+        </button>
+
+
+        <!-- Groups -->
+
+        <button
+          class="nav-item"
+          data-page="groups"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+
+            <path
+              d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+            />
+
+            <circle
+              cx="9"
+              cy="7"
+              r="4"
+            />
+
+            <path
+              d="M23 21v-2a4 4 0 0 0-3-3.87"
+            />
+
+            <path
+              d="M16 3.13a4 4 0 0 1 0 7.75"
+            />
+
+          </svg>
+
+          <span>
+            المجموعات
+          </span>
+
+        </button>
+
+
+        <!-- Calendar -->
+
+        <button
+          class="nav-item"
+          data-page="calendar"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+
+            <rect
+              x="3"
+              y="4"
+              width="18"
+              height="18"
+              rx="2"
+            />
+
+            <path
+              d="M16 2v4M8 2v4M3 10h18"
+            />
+
+          </svg>
+
+          <span>
+            التقويم
+          </span>
+
+        </button>
+
+
+        <!-- More -->
+
+        <button
+          class="nav-item"
+          data-page="more"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="currentColor"
+          >
+
+            <circle
+              cx="12"
+              cy="5"
+              r="2"
+            />
+
+            <circle
+              cx="12"
+              cy="12"
+              r="2"
+            />
+
+            <circle
+              cx="12"
+              cy="19"
+              r="2"
+            />
+
+          </svg>
+
+          <span>
+            المزيد
+          </span>
+
+        </button>
+
+      </nav>
+
+    </main>
+
+
+    <!-- ============================= -->
+    <!-- Modal Container -->
+    <!-- ============================= -->
+
+    <div
+      id="modal-container"
+      class="modal-container hidden"
+    >
+
+      <div
+        class="modal-overlay"
+        id="modal-overlay"
+      ></div>
+
+      <div
+        class="modal-content"
+        id="modal-content"
+        role="dialog"
+        aria-modal="true"
+      ></div>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- Toast Container -->
+    <!-- ============================= -->
+
+    <div
+      id="toast-container"
+      class="toast-container"
+    ></div>
+
+
+    <!-- ============================= -->
+    <!-- Install Banner -->
+    <!-- ============================= -->
+
+    <div
+      id="install-banner"
+      class="install-banner hidden"
+    >
+
+      <div class="install-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          width="24"
+          height="24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+
+          <line
+            x1="12"
+            y1="15"
+            x2="12"
+            y2="3"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <div class="install-text">
+
+        <strong>
+          ثبّت تطبيق مُعلّمي
+        </strong>
+
+        <span>
+          الوصول السريع من شاشتك الرئيسية
+        </span>
+
+      </div>
+
+
+      <button
+        class="btn btn-primary btn-sm"
+        id="install-btn"
+      >
+        تثبيت
+      </button>
+
+
+      <button
+        class="icon-btn"
+        id="install-close"
+        aria-label="إغلاق"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- Update Banner -->
+    <!-- ============================= -->
+
+    <div
+      id="update-banner"
+      class="update-banner hidden"
+    >
+
+      <span>
+        يتوفر إصدار جديد من التطبيق
+      </span>
+
+      <button
+        class="btn btn-primary btn-sm"
+        id="update-btn"
+      >
+        تحديث
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- Scripts -->
+  <!-- ============================= -->
+
+  <!-- Scripts (الترتيب مهم: storage ثم utils ثم الوحدات ثم app) -->
+  <script
+    src="js/storage.js"
+    defer
+  ></script>
+
+  <script
+    src="js/utils.js"
+    defer
+  ></script>
+
+  <script
+    src="js/auth.js"
+    defer
+  ></script>
+
+  <script
+    src="js/ai-analysis.js"
+    defer
+  ></script>
+
+  <script
+    src="js/ai.js"
+    defer
+  ></script>
+
+  <script
+    src="js/dashboard.js"
+    defer
+  ></script>
+
+  <script
+    src="js/students.js"
+    defer
+  ></script>
+
+  <script
+    src="js/groups.js"
+    defer
+  ></script>
+
+  <script
+    src="js/lessons.js"
+    defer
+  ></script>
+
+  <script
+    src="js/attendance.js"
+    defer
+  ></script>
+
+  <script
+    src="js/assignments.js"
+    defer
+  ></script>
+
+  <script
+    src="js/exams.js"
+    defer
+  ></script>
+
+  <script
+    src="js/payments.js"
+    defer
+  ></script>
+
+  <script
+    src="js/reports.js"
+    defer
+  ></script>
+
+  <script
+    src="js/parent-report.js"
+    defer
+  ></script>
+
+  <script
+    src="js/calendar.js"
+    defer
+  ></script>
+
+  <script
+    src="js/notifications.js"
+    defer
+  ></script>
+
+  <script
+    src="js/search.js"
+    defer
+  ></script>
+
+  <script
+    src="js/backup.js"
+    defer
+  ></script>
+
+  <script
+    src="js/settings.js"
+    defer
+  ></script>
+
+  <script
+    src="js/app.js"
+    defer
+  ></script>
+
+</body>
+</html>
