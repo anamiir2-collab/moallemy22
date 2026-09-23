@@ -1,8 +1,6 @@
-/* مُعلّمي Service Worker - v2.0.0 */
-const APP_VERSION = 'v2.0.0';
+/* مُعلّمي Service Worker - v1.1.2 (Supabase Cloud + Email Auth) */
+const APP_VERSION = 'v1.1.2';
 const CACHE_NAME = `moallemy-${APP_VERSION}`;
-const RUNTIME_CACHE = `moallemy-runtime-${APP_VERSION}`;
-
 const ASSETS = [
   './',
   './index.html',
@@ -10,14 +8,12 @@ const ASSETS = [
   './css/style.css',
   './css/components.css',
   './css/animations.css',
-  './css/reports.css',
   './css/responsive.css',
-  './css/print.css',
+  './js/vendor/supabase.js',
+  './js/supabase-config.js',
   './js/storage.js',
-  './js/utils.js',
+  './js/cloud.js',
   './js/auth.js',
-  './js/ai-analysis.js',
-  './js/ai.js',
   './js/dashboard.js',
   './js/students.js',
   './js/groups.js',
@@ -27,11 +23,8 @@ const ASSETS = [
   './js/exams.js',
   './js/payments.js',
   './js/reports.js',
-  './js/parent-report.js',
   './js/calendar.js',
   './js/notifications.js',
-  './js/search.js',
-  './js/backup.js',
   './js/settings.js',
   './js/app.js',
   './assets/icons/icon-192.png',
@@ -55,21 +48,24 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((k) => k !== CACHE_NAME && k !== RUNTIME_CACHE).map((k) => caches.delete(k))
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
       );
     })
   );
   self.clients.claim();
 });
 
-/* Fetch */
+/* Fetch - network-first for navigation, cache-first for assets */
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  // Navigation requests: network-first, fallback to cache (Offline كامل)
+  // Skip cross-origin requests (CDNs, fonts)
+  if (url.origin !== self.location.origin) return;
+
+  // Navigation requests: network-first, fallback to cache
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
@@ -83,41 +79,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // نفس الأصل: cache-first مع تحديث خلفي
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        const network = fetch(req).then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-          }
-          return res;
-        }).catch(() => cached);
-        return cached || network;
-      })
-    );
-    return;
-  }
-
-  // موارد خارجية (خطوط Google + Chart.js CDN): cache-first في كاش منفصل
-  // حتى يعمل التطبيق Offline بخطوطه ورسومه البيانية
-  if (url.hostname.includes('fonts.googleapis.com') ||
-      url.hostname.includes('fonts.gstatic.com') ||
-      url.hostname.includes('cdn.jsdelivr.net')) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        if (cached) return cached;
-        return fetch(req).then((res) => {
-          if (res && (res.status === 200 || res.type === 'opaque')) {
-            const copy = res.clone();
-            caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        }).catch(() => cached);
-      })
-    );
-  }
+  // Static assets: cache-first
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        if (!res || res.status !== 200) return res;
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => cached);
+    })
+  );
 });
 
 /* Message - handle skip waiting from page */
