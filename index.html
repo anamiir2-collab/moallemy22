@@ -2,100 +2,209 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#8B5E34" />
-  <meta name="description" content="مُعلّمي - نظام إدارة متكامل للمدرسين في مصر: الطلاب، المجموعات، الحصص، الحضور، المدفوعات، التقارير" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="مُعلّمي" />
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
-  <link rel="icon" type="image/png" href="assets/icons/icon-192.png" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+  />
+
+  <meta
+    name="theme-color"
+    content="#8B5E34"
+  />
+
+  <meta
+    name="description"
+    content="مُعلّمي - نظام إدارة متكامل للمدرسين في مصر: الطلاب، المجموعات، الحصص، الحضور، المدفوعات، التقارير"
+  />
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  />
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  />
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="مُعلّمي"
+  />
+
+  <link
+    rel="manifest"
+    href="manifest.json"
+  />
+
+  <link
+    rel="apple-touch-icon"
+    href="assets/icons/icon-192.png"
+  />
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="assets/icons/icon-192.png"
+  />
 
   <title>مُعلّمي | Moallemy</title>
 
+
+  <!-- ============================= -->
   <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- ============================= -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
   <link
     href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
     rel="stylesheet"
   />
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/animations.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
 
-  <!-- Chart.js CDN -->
+  <!-- ============================= -->
+  <!-- Styles -->
+  <!-- ============================= -->
+
+  <link
+    rel="stylesheet"
+    href="css/style.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/components.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/animations.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="css/responsive.css"
+  />
+
+
+  <!-- ============================= -->
+  <!-- Chart.js -->
+  <!-- ============================= -->
+
   <script
     src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
     defer
   ></script>
+
 </head>
 
+
 <body>
+
 
   <!-- ============================= -->
   <!-- Splash / Loading -->
   <!-- ============================= -->
 
-  <div id="splash-screen" class="splash-screen">
+  <div
+    id="splash-screen"
+    class="splash-screen"
+  >
 
     <div class="splash-logo">
 
       <div class="splash-icon">
+
         <img
           src="assets/icons/icon-192.png"
           alt="مُعلّمي"
         />
+
       </div>
 
+
       <div class="splash-text">
-        <h1>مُعلّمي</h1>
-        <p>Moallemy</p>
+
+        <h1>
+          مُعلّمي
+        </h1>
+
+        <p>
+          Moallemy
+        </p>
+
       </div>
 
     </div>
 
+
     <div class="splash-loader">
+
       <span></span>
+
     </div>
 
   </div>
+
 
 
   <!-- ============================= -->
   <!-- App Root -->
   <!-- ============================= -->
 
-  <div id="app" class="app hidden">
+  <div
+    id="app"
+    class="app hidden"
+  >
 
 
     <!-- ============================= -->
     <!-- Onboarding / Auth -->
     <!-- ============================= -->
 
-    <section id="auth-screen" class="auth-screen hidden">
+    <section
+      id="auth-screen"
+      class="auth-screen hidden"
+    >
 
       <div class="auth-container">
+
+
+        <!-- ============================= -->
+        <!-- Auth Hero -->
+        <!-- ============================= -->
 
         <div class="auth-hero">
 
           <div class="auth-logo">
 
             <div class="logo-mark">
+
               <img
                 src="assets/icons/icon-192.png"
                 alt="مُعلّمي"
               />
+
             </div>
 
           </div>
 
-          <h1>مُعلّمي</h1>
+
+          <h1>
+            مُعلّمي
+          </h1>
+
 
           <p class="auth-tagline">
             كل دروسك وطلابك في مكان واحد
@@ -104,25 +213,32 @@
         </div>
 
 
+
+        <!-- ============================= -->
         <!-- Auth Tabs -->
+        <!-- ============================= -->
 
         <div class="auth-tabs">
 
           <button
             class="auth-tab active"
             data-tab="login"
+            type="button"
           >
             تسجيل الدخول
           </button>
 
+
           <button
             class="auth-tab"
             data-tab="register"
+            type="button"
           >
             إنشاء حساب
           </button>
 
         </div>
+
 
 
         <!-- ============================= -->
@@ -136,11 +252,18 @@
           autocomplete="off"
         >
 
-          <div class="field" id="login-email-field">
+
+          <!-- البريد الإلكتروني -->
+
+          <div
+            class="field"
+            id="login-email-field"
+          >
 
             <label for="login-email">
-              البريد الإلكتروني
+              البريد الإلكتروني *
             </label>
+
 
             <input
               type="email"
@@ -153,11 +276,18 @@
           </div>
 
 
-          <div class="field" id="login-password-field">
+
+          <!-- كلمة المرور -->
+
+          <div
+            class="field"
+            id="login-password-field"
+          >
 
             <label for="login-password">
-              كلمة المرور
+              كلمة المرور *
             </label>
+
 
             <input
               type="password"
@@ -170,6 +300,9 @@
           </div>
 
 
+
+          <!-- نسيت كلمة المرور -->
+
           <button
             type="button"
             id="forgot-pass"
@@ -178,6 +311,9 @@
             نسيت كلمة المرور؟
           </button>
 
+
+
+          <!-- دخول -->
 
           <button
             type="submit"
@@ -189,35 +325,10 @@
         </form>
 
 
-        <!-- Register Method Switch (هاتف / بريد) -->
-
-        <div
-          class="auth-tabs auth-switch"
-          id="reg-method"
-          aria-label="طريقة إنشاء الحساب"
-        >
-
-          <button
-            type="button"
-            class="auth-tab active"
-            data-method="phone"
-          >
-            بالهاتف
-          </button>
-
-          <button
-            type="button"
-            class="auth-tab"
-            data-method="email"
-          >
-            بالبريد
-          </button>
-
-        </div>
-
 
         <!-- ============================= -->
         <!-- Register Form -->
+        <!-- التسجيل بالبريد + الهاتف -->
         <!-- ============================= -->
 
         <form
@@ -226,11 +337,15 @@
           autocomplete="off"
         >
 
+
+          <!-- اسم المدرس -->
+
           <div class="field">
 
             <label for="reg-name">
               اسم المدرس *
             </label>
+
 
             <input
               type="text"
@@ -242,13 +357,20 @@
           </div>
 
 
+
+          <!-- المادة + المرحلة -->
+
           <div class="field-row">
+
+
+            <!-- المادة -->
 
             <div class="field">
 
               <label for="reg-subject">
                 المادة الأساسية *
               </label>
+
 
               <select
                 id="reg-subject"
@@ -258,11 +380,15 @@
             </div>
 
 
+
+            <!-- المرحلة -->
+
             <div class="field">
 
               <label for="reg-stage">
                 المرحلة التعليمية
               </label>
+
 
               <select
                 id="reg-stage"
@@ -273,13 +399,20 @@
           </div>
 
 
+
+          <!-- المحافظة + الهاتف -->
+
           <div class="field-row">
+
+
+            <!-- المحافظة -->
 
             <div class="field">
 
               <label for="reg-gov">
                 المحافظة
               </label>
+
 
               <select
                 id="reg-gov"
@@ -288,19 +421,22 @@
             </div>
 
 
+
+            <!-- رقم الهاتف -->
+
             <div class="field">
 
               <label for="reg-phone">
-                <span id="reg-phone-label">
-                  رقم الهاتف *
-                </span>
+                رقم الهاتف *
               </label>
+
 
               <input
                 type="tel"
                 id="reg-phone"
                 inputmode="numeric"
                 placeholder="01xxxxxxxxx"
+                autocomplete="tel"
                 required
               />
 
@@ -309,70 +445,43 @@
           </div>
 
 
+
+          <!-- ============================= -->
+          <!-- البريد الإلكتروني -->
+          <!-- إجباري -->
+          <!-- ============================= -->
+
           <div class="field">
 
             <label for="reg-email">
-              <span id="reg-email-label">
-                البريد الإلكتروني (اختياري)
-              </span>
+              البريد الإلكتروني *
             </label>
+
 
             <input
               type="email"
               id="reg-email"
               placeholder="email@example.com"
+              autocomplete="email"
+              required
             />
 
           </div>
 
 
+
+          <!-- ============================= -->
+          <!-- كلمة المرور -->
+          <!-- لا يوجد PIN -->
+          <!-- ============================= -->
+
           <div
             class="field-row"
-            id="reg-pin-row"
-          >
-
-            <div class="field">
-
-              <label for="reg-pin">
-                رمز المرور (PIN) *
-              </label>
-
-              <input
-                type="password"
-                id="reg-pin"
-                inputmode="numeric"
-                maxlength="6"
-                placeholder="4-6 أرقام"
-                required
-              />
-
-            </div>
-
-
-            <div class="field">
-
-              <label for="reg-pin2">
-                تأكيد PIN *
-              </label>
-
-              <input
-                type="password"
-                id="reg-pin2"
-                inputmode="numeric"
-                maxlength="6"
-                placeholder="••••"
-                required
-              />
-
-            </div>
-
-          </div>
-
-
-          <div
-            class="field-row hidden"
             id="reg-pass-row"
           >
+
+
+            <!-- كلمة المرور -->
 
             <div class="field">
 
@@ -380,16 +489,21 @@
                 كلمة المرور *
               </label>
 
+
               <input
                 type="password"
                 id="reg-pass"
                 minlength="6"
                 placeholder="6 أحرف على الأقل"
                 autocomplete="new-password"
+                required
               />
 
             </div>
 
+
+
+            <!-- تأكيد كلمة المرور -->
 
             <div class="field">
 
@@ -397,17 +511,24 @@
                 تأكيد كلمة المرور *
               </label>
 
+
               <input
                 type="password"
                 id="reg-pass2"
                 placeholder="••••••"
                 autocomplete="new-password"
+                required
               />
 
             </div>
 
           </div>
 
+
+
+          <!-- ============================= -->
+          <!-- إنشاء الحساب -->
+          <!-- ============================= -->
 
           <button
             type="submit"
@@ -417,6 +538,7 @@
           </button>
 
         </form>
+
 
 
         <!-- ============================= -->
@@ -433,11 +555,13 @@
             تعيين كلمة مرور جديدة لحسابك — استخدم 6 أحرف على الأقل
           </p>
 
+
           <div class="field">
 
             <label for="recovery-pass">
               كلمة المرور الجديدة *
             </label>
+
 
             <input
               type="password"
@@ -456,6 +580,7 @@
             <label for="recovery-pass2">
               تأكيد كلمة المرور *
             </label>
+
 
             <input
               type="password"
@@ -478,11 +603,15 @@
         </form>
 
 
+
+        <!-- ============================= -->
         <!-- Demo -->
+        <!-- ============================= -->
 
         <button
           id="try-demo"
           class="btn btn-text btn-block"
+          type="button"
         >
           تجربة التطبيق (بيانات تجريبية)
         </button>
@@ -490,6 +619,7 @@
       </div>
 
     </section>
+
 
 
     <!-- ============================= -->
@@ -510,6 +640,9 @@
 
         <div class="header-content">
 
+
+          <!-- User -->
+
           <div class="header-user">
 
             <div
@@ -519,6 +652,7 @@
               أ
             </div>
 
+
             <div class="header-greeting">
 
               <p
@@ -527,6 +661,7 @@
               >
                 أهلاً بك
               </p>
+
 
               <p
                 class="greeting-date"
@@ -538,7 +673,11 @@
           </div>
 
 
+
+          <!-- Actions -->
+
           <div class="header-actions">
+
 
             <!-- Search -->
 
@@ -546,6 +685,7 @@
               class="icon-btn"
               id="header-search-btn"
               aria-label="بحث"
+              type="button"
             >
 
               <svg
@@ -572,12 +712,14 @@
             </button>
 
 
+
             <!-- Notifications -->
 
             <button
               class="icon-btn"
               id="header-notif-btn"
               aria-label="الإشعارات"
+              type="button"
             >
 
               <svg
@@ -599,6 +741,7 @@
 
               </svg>
 
+
               <span
                 class="badge"
                 id="notif-badge"
@@ -616,6 +759,7 @@
       </header>
 
 
+
       <!-- ============================= -->
       <!-- Page Container -->
       <!-- ============================= -->
@@ -624,6 +768,7 @@
         id="page-container"
         class="page-container"
       ></div>
+
 
 
       <!-- ============================= -->
@@ -635,11 +780,13 @@
         id="bottom-nav"
       >
 
+
         <!-- Dashboard -->
 
         <button
           class="nav-item active"
           data-page="dashboard"
+          type="button"
         >
 
           <svg
@@ -661,6 +808,7 @@
 
           </svg>
 
+
           <span>
             الرئيسية
           </span>
@@ -668,11 +816,13 @@
         </button>
 
 
+
         <!-- Students -->
 
         <button
           class="nav-item"
           data-page="students"
+          type="button"
         >
 
           <svg
@@ -704,6 +854,7 @@
 
           </svg>
 
+
           <span>
             الطلاب
           </span>
@@ -711,11 +862,13 @@
         </button>
 
 
+
         <!-- Groups -->
 
         <button
           class="nav-item"
           data-page="groups"
+          type="button"
         >
 
           <svg
@@ -747,6 +900,7 @@
 
           </svg>
 
+
           <span>
             المجموعات
           </span>
@@ -754,11 +908,13 @@
         </button>
 
 
+
         <!-- Calendar -->
 
         <button
           class="nav-item"
           data-page="calendar"
+          type="button"
         >
 
           <svg
@@ -784,6 +940,7 @@
 
           </svg>
 
+
           <span>
             التقويم
           </span>
@@ -791,11 +948,13 @@
         </button>
 
 
+
         <!-- More -->
 
         <button
           class="nav-item"
           data-page="more"
+          type="button"
         >
 
           <svg
@@ -825,6 +984,7 @@
 
           </svg>
 
+
           <span>
             المزيد
           </span>
@@ -834,6 +994,7 @@
       </nav>
 
     </main>
+
 
 
     <!-- ============================= -->
@@ -850,6 +1011,7 @@
         id="modal-overlay"
       ></div>
 
+
       <div
         class="modal-content"
         id="modal-content"
@@ -858,6 +1020,7 @@
       ></div>
 
     </div>
+
 
 
     <!-- ============================= -->
@@ -870,6 +1033,7 @@
     ></div>
 
 
+
     <!-- ============================= -->
     <!-- Install Banner -->
     <!-- ============================= -->
@@ -878,6 +1042,7 @@
       id="install-banner"
       class="install-banner hidden"
     >
+
 
       <div class="install-icon">
 
@@ -910,6 +1075,7 @@
       </div>
 
 
+
       <div class="install-text">
 
         <strong>
@@ -923,23 +1089,28 @@
       </div>
 
 
+
       <button
         class="btn btn-primary btn-sm"
         id="install-btn"
+        type="button"
       >
         تثبيت
       </button>
+
 
 
       <button
         class="icon-btn"
         id="install-close"
         aria-label="إغلاق"
+        type="button"
       >
         ×
       </button>
 
     </div>
+
 
 
     <!-- ============================= -->
@@ -955,9 +1126,11 @@
         يتوفر إصدار جديد من التطبيق
       </span>
 
+
       <button
         class="btn btn-primary btn-sm"
         id="update-btn"
+        type="button"
       >
         تحديث
       </button>
@@ -967,101 +1140,121 @@
   </div>
 
 
+
   <!-- ============================= -->
   <!-- Scripts -->
   <!-- ============================= -->
 
+
   <!-- Supabase -->
+
   <script
     src="js/vendor/supabase.js"
     defer
   ></script>
+
 
   <script
     src="js/supabase-config.js"
     defer
   ></script>
 
+
   <script
     src="js/storage.js"
     defer
   ></script>
+
 
   <script
     src="js/cloud.js"
     defer
   ></script>
 
+
   <script
     src="js/auth.js"
     defer
   ></script>
+
 
   <script
     src="js/dashboard.js"
     defer
   ></script>
 
+
   <script
     src="js/students.js"
     defer
   ></script>
+
 
   <script
     src="js/groups.js"
     defer
   ></script>
 
+
   <script
     src="js/lessons.js"
     defer
   ></script>
+
 
   <script
     src="js/attendance.js"
     defer
   ></script>
 
+
   <script
     src="js/assignments.js"
     defer
   ></script>
+
 
   <script
     src="js/exams.js"
     defer
   ></script>
 
+
   <script
     src="js/payments.js"
     defer
   ></script>
+
 
   <script
     src="js/reports.js"
     defer
   ></script>
 
+
   <script
     src="js/calendar.js"
     defer
   ></script>
+
 
   <script
     src="js/notifications.js"
     defer
   ></script>
 
+
   <script
     src="js/settings.js"
     defer
   ></script>
+
 
   <script
     src="js/app.js"
     defer
   ></script>
 
+
 </body>
 </html>
-
