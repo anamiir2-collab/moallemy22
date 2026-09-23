@@ -1,0 +1,155 @@
+/* ============================================
+   مُعلّمي | responsive.css
+   Mobile First → Tablet → Desktop
+   ============================================ */
+
+/* ===== Mobile First (default) ===== */
+/* All base styles are mobile-first in style.css & components.css */
+
+/* ===== Large Phones (412px+) ===== */
+@media (min-width: 412px) {
+  :root {
+    --space-4: 1.125rem;
+  }
+  .quick-actions { grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+}
+
+/* ===== Tablets (768px+) ===== */
+@media (min-width: 768px) {
+  :root {
+    --header-height: 72px;
+    --bottom-nav-height: 72px;
+  }
+
+  .page-container { padding: var(--space-6); }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .auth-container {
+    padding: var(--space-10) var(--space-8);
+  }
+
+  .auth-hero h1 { font-size: var(--font-size-3xl); }
+
+  .header-content { padding: 0 var(--space-6); }
+
+  .modal-content {
+    max-width: 560px;
+    border-radius: var(--radius-2xl);
+    margin: var(--space-6) auto;
+    max-height: 88vh;
+  }
+
+  .modal-container { align-items: center; }
+
+  .field-row { grid-template-columns: 1fr 1fr; }
+
+  .list-item { padding: var(--space-4) var(--space-5); }
+
+  .page-title { font-size: var(--font-size-2xl); }
+
+  .nav-item span { font-size: var(--font-size-sm); }
+  .nav-item svg { width: 24px; height: 24px; }
+
+  /* Bottom nav becomes centered floating */
+  .bottom-nav {
+    max-width: var(--max-width-desktop);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: 0 -4px 20px rgba(23, 21, 19, 0.08);
+  }
+
+  /* Calendar bigger cells */
+  .calendar-cell { min-height: 60px; font-size: var(--font-size-sm); }
+}
+
+/* ===== Desktop (1024px+) ===== */
+@media (min-width: 1024px) {
+  .main-app {
+    max-width: var(--max-width-desktop);
+    margin: 0 auto;
+    background: var(--color-bg);
+    position: relative;
+  }
+
+  .page-container {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  /* Two-column dashboard */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Detail pages with sidebar */
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--space-5);
+    align-items: start;
+  }
+}
+
+/* ===== Larger Desktop (1280px+) ===== */
+@media (min-width: 1280px) {
+  .page-container { padding: var(--space-10) var(--space-8); }
+}
+
+/* ===== Print (for receipts and reports) ===== */
+@media print {
+  .app-header, .bottom-nav, .install-banner, .update-banner,
+  .modal-overlay, .toast-container, .btn-whatsapp, .quick-actions,
+  .nav-actions, .action-row { display: none !important; }
+
+  body { background: #fff; }
+  .page-container { padding: 0; max-width: 100%; }
+  .receipt { border: 1px solid #000; box-shadow: none; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
+}
+
+/* ===== Small phones (360px and below) ===== */
+@media (max-width: 360px) {
+  :root {
+    --space-4: 0.875rem;
+    --font-size-base: 0.9375rem;
+  }
+  .quick-actions { grid-template-columns: repeat(3, 1fr); }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .stat-card { padding: var(--space-3); }
+  .stat-value { font-size: var(--font-size-lg); }
+  .header-greeting .greeting-text { font-size: var(--font-size-sm); }
+  .nav-item span { font-size: 10px; }
+  .nav-item svg { width: 20px; height: 20px; }
+  .auth-container { padding: var(--space-5) var(--space-4); }
+}
+
+/* ===== Landscape phones ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .auth-screen { align-items: flex-start; padding-top: var(--space-4); }
+  .auth-container { padding: var(--space-4); }
+  .splash-logo { gap: var(--space-2); }
+  .splash-icon { width: 48px; height: 48px; font-size: 28px; }
+}
+
+/* ===== High DPI ===== */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .card, .stat-card, .list-item { border-width: 0.5px; }
+}
+
+/* ===== Touch optimization ===== */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover, .list-item.clickable:hover, .quick-action:hover { transform: none; }
+  .card-hover:hover { transform: none; }
+}
