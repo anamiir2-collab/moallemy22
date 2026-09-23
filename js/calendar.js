@@ -197,7 +197,7 @@ const Calendar = {
     const events = this.getEventsForDate(dateStr);
     container.innerHTML = `
       <h3 style="font-weight: 700; margin-bottom: var(--space-3);">أحداث ${UI.formatDate(dateStr, { weekday: true })}</h3>
-      ${events.length === 0 ? UI.emptyState(Icons.get('calendar', 36), 'لا توجد أحداث', 'لا توجد حصص أو اختبارات في هذا اليوم.') : `
+      ${events.length === 0 ? UI.emptyState('📅', 'لا توجد أحداث', 'لا توجد حصص أو اختبارات في هذا اليوم.') : `
         <div class="list stagger">
           ${events.map(e => this.renderEventItemLarge(e)).join('')}
         </div>
@@ -207,18 +207,18 @@ const Calendar = {
 
   renderEventItemLarge(e) {
     const colors = {
-      primary: ['lesson', 'حصة', 'lessons'],
-      warning: ['exam', 'اختبار', 'exam'],
-      info: ['assignment', 'واجب', 'assignment'],
-      success: ['payment', 'دفعة', 'payment']
+      primary: ['lesson', 'حصة', '📚'],
+      warning: ['exam', 'اختبار', '📝'],
+      info: ['assignment', 'واجب', '📋'],
+      success: ['payment', 'دفعة', '💰']
     };
-    const [type, label, icon] = colors[e.color] || ['event', 'حدث', 'info'];
+    const [type, label, icon] = colors[e.color] || ['event', 'حدث', '•'];
     return `
       <div class="list-item">
-        <div class="quick-action-icon ${e.color === 'primary' ? '' : e.color}">${Icons.get(icon, 20)}</div>
+        <div class="quick-action-icon ${e.color === 'primary' ? '' : e.color}">${icon}</div>
         <div class="list-item-body">
-          <div class="list-item-title">${Utils.escapeHTML(e.title)}</div>
-          <div class="list-item-subtitle">${Utils.escapeHTML(e.subtitle || '')}${e.time ? ' • ' + UI.formatTime(e.time) : ''}</div>
+          <div class="list-item-title">${e.title}</div>
+          <div class="list-item-subtitle">${e.subtitle || ''}${e.time ? ' • ' + UI.formatTime(e.time) : ''}</div>
         </div>
         <span class="badge badge-${e.color === 'primary' ? 'info' : e.color}">${label}</span>
       </div>

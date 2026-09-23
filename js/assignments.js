@@ -147,17 +147,18 @@ sendAssignmentToParent(assignmentId, studentId = null) {
 السلام عليكم ورحمة الله وبركاته
 
 نحيط حضرتكم علمًا بأنه تم تكليف الطالب:
-${student.name}
+👤 ${student.name}
 
-الواجب: ${assignment.name}
+📚 الواجب: ${assignment.name}
 
-${assignment.description ? `التفاصيل: ${assignment.description}\n` : ''}${assignment.topic ? `الدرس / الوحدة: ${assignment.topic}\n` : ''}
-موعد التسليم:
+${assignment.description ? `📝 التفاصيل: ${assignment.description}\n` : ''}${assignment.topic ? `📖 الدرس / الوحدة: ${assignment.topic}\n` : ''}
+
+📅 موعد التسليم:
 ${UI.formatDate(assignment.dueDate, { weekday: true })}
 
-الموعد المحدد هو الحصة الثانية القادمة للمجموعة.
+⏰ الموعد المحدد هو الحصة الثانية القادمة للمجموعة.
 
-المجموعة:
+🏫 المجموعة:
 ${group.name}
 
 برجاء متابعة الطالب والتأكد من إنجاز الواجب قبل موعد التسليم.
@@ -235,7 +236,7 @@ ${group.name}
               "
               onclick="window.open('${parent.url}', '_blank');"
             >
-              إرسال
+              💬 إرسال
             </button>
 
           </div>
@@ -266,7 +267,7 @@ ${group.name}
 },
 
   renderList(assignments, emptyTitle, emptyText) {
-    if (!assignments.length) return UI.emptyState(Icons.get('assignment', 36), emptyTitle, emptyText || '');
+    if (!assignments.length) return UI.emptyState('📋', emptyTitle, emptyText || '');
     return `<div class="list stagger">${assignments.map(a => this.renderCard(a)).join('')}</div>`;
   },
 
@@ -279,7 +280,7 @@ ${group.name}
     const isOverdue = a.dueDate < today;
     return `
       <div class="list-item clickable" data-assignment="${a.id}">
-        <div class="quick-action-icon ${isOverdue ? 'danger' : 'info'}">${Icons.get('assignment', 18)}</div>
+        <div class="quick-action-icon ${isOverdue ? 'danger' : 'info'}">📋</div>
         <div class="list-item-body">
           <div class="list-item-title">${a.name}</div>
           <div class="list-item-subtitle">${group ? group.name : ''} • تسليم: ${UI.formatDate(a.dueDate)}</div>
@@ -385,7 +386,7 @@ const updateDueDate = () => {
     dueDateInput.value = secondLesson.date;
 
     dueHint.innerHTML =
-      `موعد التسليم: <strong>${UI.formatDate(
+      `📅 موعد التسليم: <strong>${UI.formatDate(
         secondLesson.date,
         { weekday: true }
       )}</strong> — الحصة الثانية القادمة`;
@@ -393,7 +394,7 @@ const updateDueDate = () => {
     dueDateInput.value = today;
 
     dueHint.textContent =
-      'لا توجد حصتان قادمتان مسجلتان لهذه المجموعة، يمكنك تحديد الموعد يدويًا.';
+      '⚠️ لا توجد حصتان قادمتان مسجلتان لهذه المجموعة، يمكنك تحديد الموعد يدويًا.';
   }
 };
 
@@ -439,7 +440,7 @@ updateDueDate();
     const statusMap = {
       'submitted': ['success', 'تم التسليم', '✓'],
       'not_submitted': ['danger', 'لم يسلم', '✕'],
-      'late': ['warning', 'متأخر', 'متأخر'],
+      'late': ['warning', 'متأخر', '⏰'],
       'reviewed': ['info', 'تمت المراجعة', '✓✓']
     };
 
@@ -467,7 +468,7 @@ updateDueDate();
     id="send-assignment-parents"
     style="flex:1;"
   >
-    إرسال الواجب لأولياء الأمور
+    📱 إرسال الواجب لأولياء الأمور
   </button>
 </div>
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-tertiary);">الدرجة</span><span>${a.maxGrade}</span></div>
@@ -496,7 +497,7 @@ updateDueDate();
         <div class="list">
           ${subs.map(sub => {
             const s = Storage.find(Storage.KEYS.students, sub.studentId);
-            const [cls, label, icon] = statusMap[sub.status] || ['info', sub.status, ''];
+            const [cls, label, icon] = statusMap[sub.status] || ['info', sub.status, '?'];
             return `
               <div class="list-item clickable" data-submission="${sub.id}">
                 <div class="avatar avatar-sm">${UI.initials(s ? s.name : '؟')}</div>
@@ -504,7 +505,7 @@ updateDueDate();
                   <div class="list-item-title">${s ? s.name : '—'}</div>
                   <div class="list-item-subtitle">${sub.score != null ? sub.score + '/' + a.maxGrade : label}</div>
                 </div>
-                <span class="badge badge-${cls}">${icon ? icon + ' ' : ''}${label}</span>
+                <span class="badge badge-${cls}">${icon} ${label}</span>
               </div>
             `;
           }).join('')}

@@ -1,11 +1,13 @@
 /* ============================================
    مُعلّمي | reports.js
-   التقارير: طالب/مجموعة/مالي/تحليلات + سجل التقارير المحفوظة
+   التقارير + مشاركة عبر WhatsApp
    ============================================ */
 
 const Reports = {
   render() {
-    const savedReports = Storage.list(Storage.KEYS.reports).sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+    const students = Storage.list(Storage.KEYS.students);
+    const groups = Storage.list(Storage.KEYS.groups);
+    const payments = Storage.list(Storage.KEYS.payments);
 
     return `
       <div class="page-header">
@@ -14,81 +16,49 @@ const Reports = {
       </div>
 
       <div class="section">
-        <h2 class="section-title" style="margin-bottom: var(--space-3);">تقارير سريعة</h2>
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">📊 تقارير سريعة</h2>
         <div class="list stagger">
           <div class="list-item clickable" data-report="student">
-            <div class="quick-action-icon">${Icons.get('user', 20)}</div>
+            <div class="quick-action-icon">👤</div>
             <div class="list-item-body">
               <div class="list-item-title">تقرير طالب</div>
               <div class="list-item-subtitle">تقرير شامل لطالب معين</div>
             </div>
-            ${Icons.get('forward', 20)}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
           </div>
           <div class="list-item clickable" data-report="group">
-            <div class="quick-action-icon gold">${Icons.get('groups', 20)}</div>
+            <div class="quick-action-icon">👥</div>
             <div class="list-item-body">
               <div class="list-item-title">تقرير مجموعة</div>
               <div class="list-item-subtitle">إحصائيات وأداء مجموعة كاملة</div>
             </div>
-            ${Icons.get('forward', 20)}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
           </div>
           <div class="list-item clickable" data-report="financial">
-            <div class="quick-action-icon gold">${Icons.get('payment', 20)}</div>
+            <div class="quick-action-icon gold">💰</div>
             <div class="list-item-body">
               <div class="list-item-title">التقرير المالي</div>
               <div class="list-item-subtitle">دخل ومستحقات وإيرادات</div>
             </div>
-            ${Icons.get('forward', 20)}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
           </div>
           <div class="list-item clickable" data-report="analytics">
-            <div class="quick-action-icon info">${Icons.get('chart', 20)}</div>
+            <div class="quick-action-icon info">📈</div>
             <div class="list-item-body">
               <div class="list-item-title">تحليلات الطلاب</div>
               <div class="list-item-subtitle">رؤى مستخرجة من البيانات</div>
             </div>
-            ${Icons.get('forward', 20)}
-          </div>
-          <div class="list-item clickable" data-report="needs">
-            <div class="quick-action-icon danger">${Icons.get('warn', 20)}</div>
-            <div class="list-item-body">
-              <div class="list-item-title">طلاب يحتاجون متابعة</div>
-              <div class="list-item-subtitle">مؤشرات سلبية مع الإجراء المقترح</div>
-            </div>
-            ${Icons.get('forward', 20)}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
           </div>
         </div>
       </div>
 
-      ${savedReports.length ? `
-        <div class="section">
-          <div class="section-header">
-            <h2 class="section-title">أحدث التقارير المحفوظة</h2>
-            <span class="badge">${Storage.list(Storage.KEYS.reports).length}</span>
-          </div>
-          <div class="list stagger">
-            ${savedReports.map(r => {
-              const s = r.studentId ? Storage.find(Storage.KEYS.students, r.studentId) : null;
-              return `
-                <div class="list-item clickable" data-open-saved="${r.id}">
-                  <div class="list-item-avatar">${Icons.get('file', 18)}</div>
-                  <div class="list-item-body">
-                    <div class="list-item-title">${Utils.escapeHTML(r.title || r.type)}</div>
-                    <div class="list-item-subtitle">${Utils.escapeHTML(r.type || '')} • ${UI.relativeTime(r.createdAt)}${s ? ' • ' + Utils.escapeHTML(s.name) : ''}</div>
-                  </div>
-                  ${Icons.get('forward', 18)}
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      ` : ''}
-
       <div class="section">
-        <h2 class="section-title" style="margin-bottom: var(--space-3);">ربط مع أولياء الأمور</h2>
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">🔗 ربط مع أولياء الأمور</h2>
         <div class="card">
-          <p style="color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; margin-bottom: var(--space-3);">تقارير احترافية لولي الأمر مع معاينة كاملة قبل الإرسال: قوالب جاهزة، نص قابل للتعديل، نسخ، وطباعة A4. لا يتم أي إرسال بدون تأكيدك.</p>
+          <p style="color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6; margin-bottom: var(--space-3);">يمكنك إرسال تقارير فردية لأولياء الأمور عبر WhatsApp مباشرةً. اختر الطالب لبدء الإجراء.</p>
           <button class="btn btn-whatsapp btn-block" onclick="Reports.openParentShare()">
-            ${Icons.get('whatsapp', 18)}
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4 7.94 7.94 0 0 0 5.1 15.94L4 20l4.16-1.09a7.93 7.93 0 0 0 3.79.97h.01a7.94 7.94 0 0 0 5.64-13.55z"/></svg>
             إرسال تقرير لولي الأمر
           </button>
         </div>
@@ -104,12 +74,7 @@ const Reports = {
         else if (type === 'group') this.openGroupReport();
         else if (type === 'financial') this.openFinancialReport();
         else if (type === 'analytics') this.openAnalytics();
-        else if (type === 'needs') App.navigate('needs');
       });
-    });
-
-    document.querySelectorAll('[data-open-saved]').forEach(el => {
-      el.addEventListener('click', () => this.viewSaved(el.dataset.openSaved));
     });
   },
 
@@ -117,50 +82,7 @@ const Reports = {
     this.openStudentReport();
   },
 
-  /* ===== سجل التقارير: عرض تقرير محفوظ ===== */
-  viewSaved(reportId) {
-    const r = Storage.find(Storage.KEYS.reports, reportId);
-    if (!r) { UI.toast('التقرير غير موجود', 'error'); return; }
-    const s = r.studentId ? Storage.find(Storage.KEYS.students, r.studentId) : null;
-
-    UI.modal({
-      title: r.title || 'تقرير محفوظ',
-      size: 'large',
-      body: `
-        ${s ? `<p style="font-size:var(--font-size-sm); color:var(--text-tertiary); margin-bottom: var(--space-2);">الطالب: ${Utils.escapeHTML(s.name)} • ${Utils.escapeHTML(r.type || '')} • ${UI.formatDate(new Date(r.createdAt).toISOString())}</p>` : ''}
-        <div class="field">
-          <textarea id="saved-report-text" rows="14" style="min-height:240px; line-height:1.8; font-size:var(--font-size-sm);">${Utils.escapeHTML(r.content || '')}</textarea>
-        </div>
-        <div class="action-row" style="margin-top: var(--space-3); flex-wrap: wrap;">
-          <button class="btn btn-primary btn-sm" id="sr-update" style="flex:1;">${Icons.get('check', 16)} حفظ التعديل</button>
-          <button class="btn btn-outline btn-sm" id="sr-copy" style="flex:1;">${Icons.get('copy', 16)} نسخ</button>
-          ${s ? `<button class="btn btn-outline btn-sm" id="sr-print" style="flex:1;">${Icons.get('print', 16)} طباعة</button>
-          <button class="btn btn-whatsapp btn-sm" id="sr-wa" style="flex:1;">${Icons.get('whatsapp', 16)} واتساب</button>` : ''}
-        </div>
-      `
-    });
-
-    document.getElementById('sr-update').addEventListener('click', () => {
-      Storage.update(Storage.KEYS.reports, r.id, { content: document.getElementById('saved-report-text').value, version: (r.version || 1) + 1 });
-      UI.toast('تم حفظ التعديل - إصدار ' + ((r.version || 1) + 1), 'success');
-    });
-
-    document.getElementById('sr-copy').addEventListener('click', async () => {
-      const ok = await Utils.copyText(document.getElementById('saved-report-text').value);
-      UI.toast(ok ? 'تم النسخ' : 'تعذر النسخ', ok ? 'success' : 'error');
-    });
-
-    if (s) {
-      document.getElementById('sr-print').addEventListener('click', () => {
-        ParentReport.print(s.id, document.getElementById('saved-report-text').value);
-      });
-      document.getElementById('sr-wa').addEventListener('click', () => {
-        ParentReport.previewWhatsapp(s.id, document.getElementById('saved-report-text').value);
-      });
-    }
-  },
-
-  /* ===== تقرير طالب سريع (منظرة قديمة محفوظة للتوافق) ===== */
+  // ===== Student Report =====
   openStudentReport(studentId = null) {
     if (studentId) {
       this.showStudentReport(studentId);
@@ -175,30 +97,30 @@ const Reports = {
       title: 'اختر الطالب',
       body: `
         <div class="search-bar">
-          ${Icons.get('search', 18)}
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="search" id="report-student-search" placeholder="ابحث...">
         </div>
         <div id="report-students-list" style="max-height: 60vh; overflow-y: auto;">
           ${students.map(s => `
             <div class="list-item clickable" data-student="${s.id}">
-              <div class="avatar avatar-sm">${Utils.escapeHTML(UI.initials(s.name))}</div>
+              <div class="avatar avatar-sm">${UI.initials(s.name)}</div>
               <div class="list-item-body">
-                <div class="list-item-title">${Utils.escapeHTML(s.name)}</div>
-                <div class="list-item-subtitle">${Utils.escapeHTML(s.className || '')} • ${Utils.escapeHTML(s.subject || '')}</div>
+                <div class="list-item-title">${s.name}</div>
+                <div class="list-item-subtitle">${s.className} • ${s.subject}</div>
               </div>
             </div>
           `).join('')}
         </div>
       `
     });
-    document.getElementById('report-student-search').addEventListener('input', Utils.debounce((e) => {
+    document.getElementById('report-student-search').addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
-      document.querySelectorAll('#modal-content [data-student]').forEach(el => {
+      document.querySelectorAll('[data-student]').forEach(el => {
         const name = el.querySelector('.list-item-title').textContent.toLowerCase();
         el.style.display = name.includes(q) ? '' : 'none';
       });
-    }, 200));
-    document.querySelectorAll('#modal-content [data-student]').forEach(el => {
+    });
+    document.querySelectorAll('[data-student]').forEach(el => {
       el.addEventListener('click', () => {
         UI.closeModal();
         setTimeout(() => this.showStudentReport(el.dataset.student), 300);
@@ -210,59 +132,94 @@ const Reports = {
     const s = Storage.find(Storage.KEYS.students, studentId);
     if (!s) return;
     const group = Storage.find(Storage.KEYS.groups, s.groupId);
-    const data = AIAnalysis.prepare(studentId);
-    if (!data) return;
-    const perf = AIAnalysis.performance(data);
-    const trend = AI.trendLabel(data.gradeTrend);
+    const att = Storage.list(Storage.KEYS.attendance, a => a.studentId === studentId);
+    const grades = Storage.list(Storage.KEYS.grades, g => g.studentId === studentId);
+    const subs = Storage.list(Storage.KEYS.submissions, sub => sub.studentId === studentId);
+    const payments = Storage.list(Storage.KEYS.payments, p => p.studentId === studentId);
     const teacher = Auth.getTeacher();
+
+    const present = att.filter(a => a.status === 'حاضر').length;
+    const absent = att.filter(a => a.status === 'غائب').length;
+    const late = att.filter(a => a.status === 'متأخر').length;
+    const attRate = att.length ? Math.round(present / att.length * 100) : 100;
+    const avgGrade = grades.length ? Math.round(grades.reduce((sum, g) => sum + g.score / g.maxGrade * 100, 0) / grades.length) : 0;
+    const submitted = subs.filter(sub => sub.status === 'submitted' || sub.status === 'reviewed').length;
+    const totalReq = payments.reduce((sum, p) => sum + (p.required || 0), 0);
+    const totalPaid = payments.reduce((sum, p) => sum + (p.paid || 0), 0);
+
+    const reportText = `*تقرير متابعة الطالب*\n` +
+      `═════════════════\n\n` +
+      `👤 الاسم: ${s.name}\n` +
+      `📚 الصف: ${s.className}${s.section ? ' - ' + s.section : ''}\n` +
+      `📖 المادة: ${s.subject}\n` +
+      `👥 المجموعة: ${group ? group.name : '—'}\n\n` +
+      `📅 *الحضور:*\n` +
+      `• نسبة الحضور: ${attRate}%\n` +
+      `• أيام الحضور: ${present}\n` +
+      `• أيام الغياب: ${absent}\n` +
+      `• مرات التأخير: ${late}\n\n` +
+      `📝 *الاختبارات:*\n` +
+      (grades.length ? grades.map(g => {
+        const e = Storage.find(Storage.KEYS.exams, g.examId);
+        return `• ${e ? e.name : ''}: ${g.score}/${g.maxGrade} (${Math.round(g.score / g.maxGrade * 100)}%)\n`;
+      }).join('') : '• لا يوجد اختبارات\n') +
+      `المتوسط: ${avgGrade}%\n\n` +
+      `📋 *الواجبات:*\n` +
+      `• المسلم: ${submitted} من ${subs.length}\n\n` +
+      `💰 *المدفوعات:*\n` +
+      `• المطلوب: ${UI.money(totalReq)}\n` +
+      `• المدفوع: ${UI.money(totalPaid)}\n` +
+      `• المتبقي: ${UI.money(totalReq - totalPaid)}\n\n` +
+      `التاريخ: ${UI.formatDate(new Date().toISOString())}\n` +
+      `═════════════════\n` +
+      `أ/ ${teacher ? teacher.name : ''}\n` +
+      `مُعلّمي - نظام إدارة الدروس`;
 
     UI.modal({
       title: 'تقرير الطالب',
-      size: 'large',
       body: `
         <div class="detail-header" style="margin-bottom: var(--space-4); padding: var(--space-4);">
-          <div class="detail-avatar" style="width: 56px; height: 56px; font-size: var(--font-size-lg);">${Utils.escapeHTML(UI.initials(s.name))}</div>
-          <h3 style="color:#fff;font-size:var(--font-size-md);margin-bottom:4px;">${Utils.escapeHTML(s.name)}</h3>
-          <p style="color:rgba(255,255,255,0.85);font-size:var(--font-size-sm);">${Utils.escapeHTML(s.className || '')} • ${Utils.escapeHTML(s.subject || '')}</p>
+          <div class="detail-avatar" style="width: 56px; height: 56px; font-size: var(--font-size-lg);">${UI.initials(s.name)}</div>
+          <h3 style="color:#fff;font-size:var(--font-size-md);margin-bottom:4px;">${s.name}</h3>
+          <p style="color:rgba(255,255,255,0.85);font-size:var(--font-size-sm);">${s.className} • ${s.subject}</p>
         </div>
 
         <div class="stats-grid" style="margin-bottom: var(--space-4);">
-          <div class="stat-card ${perf.score != null ? (perf.score >= 70 ? 'success' : (perf.score >= 60 ? 'warning' : 'danger')) : ''}">
-            <div class="stat-value">${perf.score != null ? perf.score + '%' : '—'}</div>
-            <div class="stat-label">الأداء العام</div>
-          </div>
-          <div class="stat-card ${data.attStats.total ? (data.attStats.rate >= 70 ? 'success' : 'danger') : ''}">
-            <div class="stat-value">${data.attStats.total ? data.attStats.rate + '%' : '—'}</div>
+          <div class="stat-card ${attRate >= 70 ? 'success' : 'danger'}">
+            <div class="stat-value">${attRate}%</div>
             <div class="stat-label">الحضور</div>
           </div>
-          <div class="stat-card ${trend.cls || 'info'}">
-            <div class="stat-value">${trend.change}</div>
-            <div class="stat-label">${trend.text}</div>
+          <div class="stat-card ${avgGrade >= 70 ? 'success' : (avgGrade >= 60 ? 'warning' : 'danger')}">
+            <div class="stat-value">${avgGrade}%</div>
+            <div class="stat-label">المتوسط</div>
           </div>
           <div class="stat-card info">
-            <div class="stat-value">${data.assignmentStats.total ? data.assignmentStats.submitted + '/' + data.assignmentStats.total : '—'}</div>
+            <div class="stat-value">${submitted}/${subs.length}</div>
             <div class="stat-label">الواجبات</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value">${UI.money(totalReq - totalPaid).replace(' ج.م', '')}</div>
+            <div class="stat-label">متبقي</div>
           </div>
         </div>
 
-        ${group ? `<p style="font-size:var(--font-size-xs); color:var(--text-tertiary); margin-bottom: var(--space-3);">المجموعة: ${Utils.escapeHTML(group.name)}</p>` : ''}
+        <div class="card" style="margin-bottom: var(--space-4); background: var(--color-surface-2); white-space: pre-wrap; font-family: monospace; font-size: 12px; line-height: 1.6; max-height: 50vh; overflow-y: auto;">${reportText}</div>
 
-        <div class="action-row" style="flex-wrap: wrap;">
-          <button class="btn btn-primary btn-sm" onclick="UI.closeModal(); ParentReport.open('${studentId}')" style="flex:1;">
-            ${Icons.get('file', 16)} تقرير ولي الأمر الكامل
+        <div class="action-row">
+          <button class="btn btn-secondary" onclick="window.print()" style="flex:1">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            طباعة
           </button>
-          <button class="btn btn-whatsapp btn-sm" onclick="UI.closeModal(); ParentReport.open('${studentId}')" style="flex:1;">
-            ${Icons.get('whatsapp', 16)} تجهيز وإرسال
+          <button class="btn btn-whatsapp" onclick="Reports.shareViaWhatsapp('${studentId}', 'student')" style="flex:1">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4 7.94 7.94 0 0 0 5.1 15.94L4 20l4.16-1.09a7.93 7.93 0 0 0 3.79.97h.01a7.94 7.94 0 0 0 5.64-13.55z"/></svg>
+            مشاركة
           </button>
         </div>
-        <p style="font-size:var(--font-size-xs); color:var(--text-tertiary); margin-top: var(--space-3); text-align:center;">
-          تقرير ولي الأمر يتضمن: الفترة، القالب، النص القابل للتعديل، المعاينة، النسخ، والطباعة A4.
-        </p>
       `
     });
   },
 
-  /* ===== تقرير مجموعة ===== */
+  // ===== Group Report =====
   openGroupReport(groupId = null) {
     if (groupId) {
       this.showGroupReport(groupId);
@@ -279,17 +236,17 @@ const Reports = {
         <div class="list">
           ${groups.map(g => `
             <div class="list-item clickable" data-group="${g.id}">
-              <div class="list-item-avatar">${Utils.escapeHTML((g.subject || 'م')[0])}</div>
+              <div class="list-item-avatar">${g.subject ? g.subject[0] : 'م'}</div>
               <div class="list-item-body">
-                <div class="list-item-title">${Utils.escapeHTML(g.name)}</div>
-                <div class="list-item-subtitle">${Utils.escapeHTML(g.subject)} • ${Utils.escapeHTML(g.className)}</div>
+                <div class="list-item-title">${g.name}</div>
+                <div class="list-item-subtitle">${g.subject} • ${g.className}</div>
               </div>
             </div>
           `).join('')}
         </div>
       `
     });
-    document.querySelectorAll('#modal-content [data-group]').forEach(el => {
+    document.querySelectorAll('[data-group]').forEach(el => {
       el.addEventListener('click', () => {
         UI.closeModal();
         setTimeout(() => this.showGroupReport(el.dataset.group), 300);
@@ -319,11 +276,10 @@ const Reports = {
 
     UI.modal({
       title: 'تقرير المجموعة',
-      size: 'large',
       body: `
         <div class="detail-header" style="margin-bottom: var(--space-4); padding: var(--space-4);">
-          <h3 style="color:#fff;font-size:var(--font-size-md);margin-bottom:4px;">${Utils.escapeHTML(g.name)}</h3>
-          <p style="color:rgba(255,255,255,0.85);font-size:var(--font-size-sm);">${Utils.escapeHTML(g.subject)} • ${Utils.escapeHTML(g.className)}</p>
+          <h3 style="color:#fff;font-size:var(--font-size-md);margin-bottom:4px;">${g.name}</h3>
+          <p style="color:rgba(255,255,255,0.85);font-size:var(--font-size-sm);">${g.subject} • ${g.className}</p>
         </div>
 
         <div class="stats-grid" style="margin-bottom: var(--space-4);">
@@ -334,7 +290,7 @@ const Reports = {
         </div>
 
         ${followUp.length > 0 ? `
-          <h3 style="font-weight:700; margin-bottom: var(--space-3);">طلاب يحتاجون متابعة (${followUp.length})</h3>
+          <h3 style="font-weight:700; margin-bottom: var(--space-3);">⚠️ طلاب يحتاجون متابعة (${followUp.length})</h3>
           <div class="list" style="margin-bottom: var(--space-4);">
             ${followUp.map(s => {
               const sAtt = Storage.list(Storage.KEYS.attendance, a => a.studentId === s.id);
@@ -342,9 +298,9 @@ const Reports = {
               const reason = sAttRate < 70 ? 'كثير الغياب' : (s.status !== 'نشط' ? s.status : '');
               return `
                 <div class="list-item clickable" onclick="UI.closeModal(); Students.openProfile('${s.id}')">
-                  <div class="avatar avatar-sm">${Utils.escapeHTML(UI.initials(s.name))}</div>
+                  <div class="avatar avatar-sm">${UI.initials(s.name)}</div>
                   <div class="list-item-body">
-                    <div class="list-item-title">${Utils.escapeHTML(s.name)}</div>
+                    <div class="list-item-title">${s.name}</div>
                     <div class="list-item-subtitle">${reason} • حضور ${sAttRate}%</div>
                   </div>
                 </div>
@@ -362,9 +318,9 @@ const Reports = {
             const sAvg = sGrades.length ? Math.round(sGrades.reduce((sum, gr) => sum + gr.score / gr.maxGrade * 100, 0) / sGrades.length) : 0;
             return `
               <div class="list-item">
-                <div class="avatar avatar-sm">${Utils.escapeHTML(UI.initials(s.name))}</div>
+                <div class="avatar avatar-sm">${UI.initials(s.name)}</div>
                 <div class="list-item-body">
-                  <div class="list-item-title">${Utils.escapeHTML(s.name)}</div>
+                  <div class="list-item-title">${s.name}</div>
                   <div class="list-item-subtitle">حضور ${sAttRate}% • متوسط ${sAvg}%</div>
                 </div>
                 ${UI.studentStatus(s.status)}
@@ -372,24 +328,30 @@ const Reports = {
             `;
           }).join('')}
         </div>
+
+        <div class="action-row" style="margin-top: var(--space-4);">
+          <button class="btn btn-secondary" onclick="window.print()" style="flex:1">طباعة</button>
+          <button class="btn btn-whatsapp" onclick="Reports.shareGroupViaWhatsapp('${groupId}')" style="flex:1">مشاركة</button>
+        </div>
       `
     });
   },
 
-  /* ===== التقرير المالي ===== */
+  // ===== Financial Report =====
   openFinancialReport() {
     const payments = Storage.list(Storage.KEYS.payments);
-    const today = Utils.today();
-    const startOfWeek = Utils.startOfWeek();
-    const startOfMonth = Utils.startOfMonth();
+    const today = new Date().toISOString().slice(0, 10);
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
     const startOfYear = new Date();
     startOfYear.setMonth(0, 1);
-    const startOfYearStr = startOfYear.toISOString().slice(0, 10);
 
     const todayRev = payments.filter(p => p.date === today).reduce((s, p) => s + (p.paid || 0), 0);
-    const weekRev = payments.filter(p => p.date && p.date >= startOfWeek).reduce((s, p) => s + (p.paid || 0), 0);
-    const monthRev = payments.filter(p => p.date && p.date >= startOfMonth).reduce((s, p) => s + (p.paid || 0), 0);
-    const yearRev = payments.filter(p => p.date && p.date >= startOfYearStr).reduce((s, p) => s + (p.paid || 0), 0);
+    const weekRev = payments.filter(p => p.date && p.date >= startOfWeek.toISOString().slice(0, 10)).reduce((s, p) => s + (p.paid || 0), 0);
+    const monthRev = payments.filter(p => p.date && p.date >= startOfMonth.toISOString().slice(0, 10)).reduce((s, p) => s + (p.paid || 0), 0);
+    const yearRev = payments.filter(p => p.date && p.date >= startOfYear.toISOString().slice(0, 10)).reduce((s, p) => s + (p.paid || 0), 0);
     const totalOutstanding = payments.reduce((s, p) => s + Math.max(0, (p.required || 0) - (p.paid || 0)), 0);
 
     // Group by month for chart
@@ -401,7 +363,6 @@ const Reports = {
 
     UI.modal({
       title: 'التقرير المالي',
-      size: 'large',
       body: `
         <div class="stats-grid" style="margin-bottom: var(--space-4);">
           <div class="stat-card success">
@@ -427,7 +388,7 @@ const Reports = {
         </div>
 
         ${months.length > 1 ? `
-          <h3 style="font-weight:700; margin-bottom: var(--space-3);">الدخل الشهري</h3>
+          <h3 style="font-weight:700; margin-bottom: var(--space-3);">📊 الدخل الشهري</h3>
           <div class="card" style="margin-bottom: var(--space-4);">
             <canvas id="financial-chart" height="180"></canvas>
           </div>
@@ -439,10 +400,10 @@ const Reports = {
             const s = Storage.find(Storage.KEYS.students, p.studentId);
             return `
               <div class="list-item">
-                <div class="avatar avatar-sm">${Utils.escapeHTML(UI.initials(s ? s.name : '؟'))}</div>
+                <div class="avatar avatar-sm">${UI.initials(s ? s.name : '؟')}</div>
                 <div class="list-item-body">
-                  <div class="list-item-title">${s ? Utils.escapeHTML(s.name) : '—'}</div>
-                  <div class="list-item-subtitle">${p.month} • ${Utils.escapeHTML(p.method || '')}</div>
+                  <div class="list-item-title">${s ? s.name : '—'}</div>
+                  <div class="list-item-subtitle">${p.month} • ${p.method || ''}</div>
                 </div>
                 <span class="badge badge-success">${UI.money(p.paid).replace(' ج.م', '')}</span>
               </div>
@@ -461,8 +422,8 @@ const Reports = {
           data: {
             labels: months.map(m => {
               const [y, mo] = m.split('-');
-              const monthsNames = ['ينا','فبر','مار','أبر','ماي','يون','يول','أغس','سبت','أكت','نوف','ديس'];
-              return monthsNames[parseInt(mo) - 1] + ' ' + y.slice(2);
+              const months = ['ينا','فبر','مار','أبر','ماي','يون','يول','أغس','سبت','أكت','نوف','ديس'];
+              return months[parseInt(mo) - 1] + ' ' + y.slice(2);
             }),
             datasets: [{
               label: 'الدخل (ج.م)',
@@ -481,7 +442,7 @@ const Reports = {
     }
   },
 
-  /* ===== تحليلات عامة ===== */
+  // ===== Analytics =====
   openAnalytics() {
     const students = Storage.list(Storage.KEYS.students);
     const att = Storage.list(Storage.KEYS.attendance);
@@ -490,9 +451,10 @@ const Reports = {
     const payments = Storage.list(Storage.KEYS.payments);
 
     const insights = [];
+
+    // High absence
     const settings = Storage.get(Storage.KEYS.settings, {});
     const threshold = settings.absenceAlertThreshold || 3;
-
     const highAbsence = students.filter(s => {
       const sAtt = att.filter(a => a.studentId === s.id && a.status === 'غائب');
       return sAtt.length >= threshold;
@@ -500,13 +462,14 @@ const Reports = {
     if (highAbsence.length) {
       insights.push({
         type: 'danger',
-        icon: 'warn',
+        icon: '⚠️',
         title: `${highAbsence.length} طالب كثير الغياب`,
         list: highAbsence.map(s => s.name).slice(0, 5),
         action: 'attendance'
       });
     }
 
+    // Outstanding payments
     const outstandingStudents = students.filter(s => {
       const sp = payments.filter(p => p.studentId === s.id);
       const req = sp.reduce((sum, p) => sum + (p.required || 0), 0);
@@ -516,54 +479,27 @@ const Reports = {
     if (outstandingStudents.length) {
       insights.push({
         type: 'warning',
-        icon: 'payment',
+        icon: '💰',
         title: `${outstandingStudents.length} طالب متأخر في الدفع`,
         list: outstandingStudents.map(s => s.name).slice(0, 5),
         action: 'payments'
       });
     }
 
+    // Late submissions
     const lateSubs = subs.filter(s => s.status === 'late' || s.status === 'not_submitted');
     const lateStudents = students.filter(s => lateSubs.some(sub => sub.studentId === s.id));
     if (lateStudents.length) {
       insights.push({
         type: 'info',
-        icon: 'assignment',
+        icon: '📋',
         title: `${lateStudents.length} طالب متأخر في الواجبات`,
         list: lateStudents.map(s => s.name).slice(0, 5),
         action: 'assignments'
       });
     }
 
-    // Trend distribution
-    const improving = [], declining = [];
-    students.forEach(s => {
-      const sg = grades.filter(g => g.studentId === s.id);
-      if (sg.length < 2) return;
-      const trend = AI.trendFromGrades(sg);
-      if (trend.direction === 'improving') improving.push(s.name);
-      else if (trend.direction === 'declining') declining.push(s.name);
-    });
-    if (improving.length >= 2) {
-      insights.push({
-        type: 'success',
-        icon: 'trendUp',
-        title: `${improving.length} طالب في اتجاه تحسن`,
-        list: improving.slice(0, 5),
-        action: 'students'
-      });
-    }
-    if (declining.length >= 2) {
-      insights.push({
-        type: 'warning',
-        icon: 'trendDown',
-        title: `${declining.length} طالب في اتجاه تراجع - يحتاجون متابعة`,
-        list: declining.slice(0, 5),
-        action: 'needs'
-      });
-    }
-
-    // Top performers (عرض داخلي للمدرس فقط)
+    // Top performers
     const studentAvgs = students.map(s => {
       const sg = grades.filter(g => g.studentId === s.id);
       if (!sg.length) return null;
@@ -572,40 +508,41 @@ const Reports = {
     if (studentAvgs.length >= 3) {
       insights.push({
         type: 'success',
-        icon: 'award',
-        title: 'أعلى الطلاب أداءً (للاطلاع الداخلي)',
+        icon: '🏆',
+        title: 'أعلى الطلاب أداءً',
         list: studentAvgs.slice(0, 5).map(s => `${s.student.name} (${Math.round(s.avg)}%)`),
         action: 'students'
       });
     }
+
+    // Need improvement
     if (studentAvgs.length >= 3) {
       const low = studentAvgs.slice(-3).filter(s => s.avg < 60);
       if (low.length) {
         insights.push({
           type: 'warning',
-          icon: 'trendDown',
+          icon: '📉',
           title: 'طلاب يحتاجون متابعة دراسية',
           list: low.map(s => `${s.student.name} (${Math.round(s.avg)}%)`),
-          action: 'needs'
+          action: 'students'
         });
       }
     }
 
     UI.modal({
       title: 'تحليلات الطلاب',
-      size: 'large',
       body: `
-        ${insights.length === 0 ? UI.emptyState(Icons.get('chart', 36), 'لا توجد بيانات كافية', 'أضف طلابًا ودرجات وحضور لتظهر التحليلات.') : ''}
+        ${insights.length === 0 ? UI.emptyState('📊', 'لا توجد بيانات كافية', 'أضف طلابًا ودرجات وحضور لتظهر التحليلات.') : ''}
         <div class="stagger">
           ${insights.map(i => `
             <div class="alert alert-${i.type}" style="margin-bottom: var(--space-3);">
-              <div class="alert-icon">${Icons.get(i.icon, 20)}</div>
+              <div class="alert-icon" style="font-size: 22px;">${i.icon}</div>
               <div class="alert-body">
                 <strong>${i.title}</strong>
                 <ul style="margin-top: 6px; padding-inline-start: 16px; font-size: var(--font-size-sm);">
-                  ${i.list.map(n => `<li style="margin-bottom: 2px;">${Utils.escapeHTML(n)}</li>`).join('')}
+                  ${i.list.map(n => `<li style="margin-bottom: 2px;">${n}</li>`).join('')}
                 </ul>
-                ${i.action ? `<button class="btn btn-text btn-sm" style="padding: 4px 0;" onclick="UI.closeModal(); App.navigate('${i.action}')">عرض التفاصيل</button>` : ''}
+                ${i.action ? `<button class="btn btn-text btn-sm" style="padding: 4px 0;" onclick="UI.closeModal(); App.navigate('${i.action}')">عرض التفاصيل →</button>` : ''}
               </div>
             </div>
           `).join('')}
@@ -614,7 +551,7 @@ const Reports = {
     });
   },
 
-  /* ===== اختيار طالب لتقرير ولي الأمر ===== */
+  // ===== WhatsApp Share =====
   openParentShare() {
     const students = Storage.list(Storage.KEYS.students, s => s.parentPhone);
     if (students.length === 0) {
@@ -624,18 +561,18 @@ const Reports = {
     UI.modal({
       title: 'إرسال تقرير لولي الأمر',
       body: `
-        <p style="color: var(--text-secondary); margin-bottom: var(--space-3); font-size: var(--font-size-sm);">اختر الطالب لفتح نافذة تجهيز التقرير (معاينة ← تعديل ← تأكيد الإرسال):</p>
+        <p style="color: var(--text-secondary); margin-bottom: var(--space-3); font-size: var(--font-size-sm);">اختر الطالب لإرسال تقريره عبر WhatsApp لولي الأمر:</p>
         <div class="search-bar">
-          ${Icons.get('search', 18)}
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="search" id="parent-share-search" placeholder="ابحث بالاسم...">
         </div>
         <div id="parent-share-list" style="max-height: 60vh; overflow-y: auto;">
           ${students.map(s => `
             <div class="list-item clickable" data-student="${s.id}">
-              <div class="avatar avatar-sm">${Utils.escapeHTML(UI.initials(s.name))}</div>
+              <div class="avatar avatar-sm">${UI.initials(s.name)}</div>
               <div class="list-item-body">
-                <div class="list-item-title">${Utils.escapeHTML(s.name)}</div>
-                <div class="list-item-subtitle">ولي الأمر: ${Utils.escapeHTML(s.parentName || '—')} • <span dir="ltr">${Utils.escapeHTML(s.parentPhone)}</span></div>
+                <div class="list-item-title">${s.name}</div>
+                <div class="list-item-subtitle">ولي الأمر: ${s.parentName || '—'} • ${s.parentPhone}</div>
               </div>
             </div>
           `).join('')}
@@ -643,25 +580,53 @@ const Reports = {
       `
     });
 
-    document.getElementById('parent-share-search').addEventListener('input', Utils.debounce((e) => {
+    document.getElementById('parent-share-search').addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
-      document.querySelectorAll('#modal-content [data-student]').forEach(el => {
+      document.querySelectorAll('[data-student]').forEach(el => {
         el.style.display = el.querySelector('.list-item-title').textContent.toLowerCase().includes(q) ? '' : 'none';
       });
-    }, 200));
+    });
 
-    document.querySelectorAll('#modal-content [data-student]').forEach(el => {
+    document.querySelectorAll('[data-student]').forEach(el => {
       el.addEventListener('click', () => {
         UI.closeModal();
-        setTimeout(() => ParentReport.open(el.dataset.student), 300);
+        setTimeout(() => this.contactParent(el.dataset.student), 300);
       });
     });
   },
 
-  /* ===== التوافق مع الاستدعاءات القديمة ===== */
-  // كل مسارات واتساب تمر الآن عبر معاينة وتأكيد المدرس
   contactParent(studentId) {
-    ParentReport.open(studentId);
+    const s = Storage.find(Storage.KEYS.students, studentId);
+    if (!s) return;
+    if (!s.parentPhone) {
+      UI.toast('لا يوجد رقم لولي الأمر', 'warning');
+      return;
+    }
+    const group = Storage.find(Storage.KEYS.groups, s.groupId);
+    const att = Storage.list(Storage.KEYS.attendance, a => a.studentId === studentId);
+    const grades = Storage.list(Storage.KEYS.grades, g => g.studentId === studentId);
+    const subs = Storage.list(Storage.KEYS.submissions, sub => sub.studentId === studentId);
+
+    const present = att.filter(a => a.status === 'حاضر').length;
+    const absent = att.filter(a => a.status === 'غائب').length;
+    const attRate = att.length ? Math.round(present / att.length * 100) : 100;
+    const avgGrade = grades.length ? Math.round(grades.reduce((sum, g) => sum + g.score / g.maxGrade * 100, 0) / grades.length) : 0;
+    const submitted = subs.filter(sub => sub.status === 'submitted' || sub.status === 'reviewed').length;
+
+    const msg = `السلام عليكم ورحمة الله وبركاته،\n\n` +
+      `نرسل لحضراتكم تقرير متابعة الطالب *${s.name}* عن الفترة الحالية.\n\n` +
+      `التقرير يتضمن:\n` +
+      `• نسبة الحضور: ${attRate}% (${present} حضور، ${absent} غياب)\n` +
+      `• متوسط الدرجات: ${avgGrade}%\n` +
+      `• الواجبات المسلمة: ${submitted} من ${subs.length}\n` +
+      (group ? `• المجموعة: ${group.name}\n` : '') +
+      `• المادة: ${s.subject}\n\n` +
+      `لمزيد من التفاصيل، يرجى التواصل.\n\n` +
+      `مع خالص التحية،\n` +
+      `أ/ ${Auth.getTeacher() ? Auth.getTeacher().name : ''}`;
+
+    const phone = s.parentPhone.replace(/^0/, '20');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   },
 
   shareViaWhatsapp(studentId, type = 'student') {
@@ -670,7 +635,7 @@ const Reports = {
       UI.toast('لا يوجد رقم لولي الأمر', 'warning');
       return;
     }
-    ParentReport.open(studentId);
+    this.contactParent(studentId);
   },
 
   shareGroupViaWhatsapp(groupId) {
@@ -683,7 +648,7 @@ const Reports = {
     const grades = Storage.list(Storage.KEYS.grades, gr => gr.groupId === groupId);
     const avgGrade = grades.length ? Math.round(grades.reduce((s, gr) => s + gr.score / gr.maxGrade * 100, 0) / grades.length) : 0;
 
-    const msg = `تقرير مجموعة - مُعلّمي\n\n` +
+    const msg = `*تقرير مجموعة - مُعلّمي*\n\n` +
       `المجموعة: ${g.name}\n` +
       `المادة: ${g.subject}\n` +
       `عدد الطلاب: ${students.length}\n` +
@@ -691,19 +656,11 @@ const Reports = {
       `متوسط الدرجات: ${avgGrade}%\n\n` +
       `أ/ ${teacher ? teacher.name : ''}`;
 
-    UI.modal({
-      title: 'مشاركة تقرير المجموعة',
-      body: `
-        <div class="whatsapp-preview">${Utils.escapeHTML(msg).replace(/\n/g, '<br>')}</div>
-        <div class="action-row" style="margin-top: var(--space-3);">
-          <button class="btn btn-outline" id="grp-copy" style="flex:1;">${Icons.get('copy', 16)} نسخ النص</button>
-        </div>
-        <p style="font-size:var(--font-size-xs); color:var(--text-tertiary); margin-top: var(--space-2);">تقرير المجموعة عام - يفضل مشاركته في قناة المجموعة وليس مع ولي أمر بعينه.</p>
-      `
-    });
-    document.getElementById('grp-copy').addEventListener('click', async () => {
-      const ok = await Utils.copyText(msg);
-      UI.toast(ok ? 'تم نسخ التقرير - شاركه عبر واتساب' : 'تعذر النسخ', ok ? 'success' : 'error');
+    // Share as text - copy to clipboard
+    navigator.clipboard?.writeText(msg).then(() => {
+      UI.toast('تم نسخ التقرير. شاركه عبر WhatsApp', 'success');
+    }).catch(() => {
+      UI.toast('تعذر النسخ. حاول مرة أخرى', 'error');
     });
   }
 };

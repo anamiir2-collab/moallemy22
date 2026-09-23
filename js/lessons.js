@@ -77,7 +77,7 @@ const Lessons = {
   },
 
   renderList(lessons, emptyTitle, emptyText) {
-    if (!lessons.length) return UI.emptyState(Icons.get('lessons', 36), emptyTitle, emptyText);
+    if (!lessons.length) return UI.emptyState('📚', emptyTitle, emptyText);
     return `<div class="stagger">${lessons.map(l => this.renderCard(l)).join('')}</div>`;
   },
 
@@ -106,9 +106,9 @@ const Lessons = {
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             ${studentCount} طالب
           </span>
-          ${l.location ? `<span>${Icons.get('location', 13)} ${Utils.escapeHTML(l.location)}</span>` : ''}
+          ${l.location ? `<span>📍 ${l.location}</span>` : ''}
         </div>
-        ${l.topic ? `<p style="margin-top:8px;font-size:13px;color:var(--text-secondary);">${Icons.get('book', 13)} ${Utils.escapeHTML(l.topic)}</p>` : ''}
+        ${l.topic ? `<p style="margin-top:8px;font-size:13px;color:var(--text-secondary);">📖 ${l.topic}</p>` : ''}
         ${att.length > 0 ? `<p style="margin-top:6px;font-size:12px;color:var(--color-success);">✓ تم تسجيل حضور ${att.length} طالب</p>` : ''}
         ${!isCompleted && l.status === 'مجدولة' ? `
           <button class="btn btn-primary btn-block" style="margin-top: var(--space-3);" data-start-lesson="${l.id}">بدء الحصة</button>
@@ -240,7 +240,7 @@ const Lessons = {
           <button class="btn btn-text btn-sm" id="mark-all-present">تحديد الكل حاضر</button>
         </div>
 
-        ${students.length === 0 ? UI.emptyState(Icons.get('students', 36), 'لا يوجد طلاب', 'لا توجد طلاب نشطين في هذه المجموعة.') : `
+        ${students.length === 0 ? UI.emptyState('👥', 'لا يوجد طلاب', 'لا توجد طلاب نشطين في هذه المجموعة.') : `
           <div id="attendance-list" style="display:flex; flex-direction:column; gap: var(--space-2); margin-bottom: var(--space-4);">
             ${students.map(s => {
               const ex = existingAtt.find(a => a.studentId === s.id);
@@ -324,7 +324,7 @@ const Lessons = {
         }
       });
 
-      UI.toast(`تم حفظ حضور ${students.length} طالب`, 'success');
+      UI.toast(`تم حفظ حضور ${students.length} طالب ✓`, 'success');
       UI.closeModal();
       // Refresh current view
       if (App.currentPage === 'lessons') App.navigate('lessons');

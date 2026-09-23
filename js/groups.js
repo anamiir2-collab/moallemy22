@@ -38,7 +38,7 @@ const Groups = {
 
     if (groups.length === 0) {
       container.innerHTML = UI.emptyState(
-        Icons.get('groups', 36),
+        '👥',
         'لا توجد مجموعات',
         'أنشئ أول مجموعة وابدأ تنظيم حصصك.',
         '+ إنشاء مجموعة',
@@ -225,7 +225,7 @@ const Groups = {
       this.generateRecurringLessons(newGroup, 4);
     }
 
-    UI.toast('تم إنشاء المجموعة بنجاح', 'success');
+    UI.toast('تم إنشاء المجموعة بنجاح ✓', 'success');
     UI.closeModal();
     this.renderList();
     Notifications.add('group', 'مجموعة جديدة', `تمت إضافة ${newGroup.name}`, newGroup.id);
@@ -297,9 +297,9 @@ const Groups = {
           <h2 class="detail-title">${g.name}</h2>
           <p class="detail-subtitle">${g.subject} • ${g.className}${g.section ? ' • ' + g.section : ''}</p>
           <div class="detail-meta">
-            <span class="detail-meta-item">${Icons.get('calendar', 13)} ${(g.days || []).map(d => dayMap[d] || d).join(' / ')}</span>
-            <span class="detail-meta-item">${Icons.get('clock', 13)} ${UI.formatTime(g.time)}</span>
-            ${g.location ? `<span class="detail-meta-item">${Icons.get('location', 13)} ${Utils.escapeHTML(g.location)}</span>` : ''}
+            <span class="detail-meta-item">📅 ${(g.days || []).map(d => dayMap[d] || d).join(' / ')}</span>
+            <span class="detail-meta-item">⏰ ${UI.formatTime(g.time)}</span>
+            ${g.location ? `<span class="detail-meta-item">📍 ${g.location}</span>` : ''}
           </div>
         </div>
 
@@ -330,7 +330,7 @@ const Groups = {
           <button class="btn btn-primary" onclick="Lessons.openAddForm('${g.id}')">+ حصة</button>
           <button class="btn btn-outline" onclick="Students.openAddForm()">+ طالب</button>
           <button class="btn btn-outline" onclick="Exams.openAddForm('${g.id}')">+ اختبار</button>
-          <button class="btn btn-outline" onclick="Reports.openGroupReport('${g.id}')">${Icons.get('report', 16)} تقرير</button>
+          <button class="btn btn-outline" onclick="Reports.openGroupReport('${g.id}')">📊 تقرير</button>
         </div>
 
         <div class="tabs" id="group-tabs">
@@ -375,7 +375,7 @@ const Groups = {
   },
 
   renderStudentsTab(students) {
-    if (!students.length) return UI.emptyState(Icons.get('students', 36), 'لا يوجد طلاب', 'أضف طلابًا لهذه المجموعة.', '+ إضافة طالب', 'add-student');
+    if (!students.length) return UI.emptyState('👥', 'لا يوجد طلاب', 'أضف طلابًا لهذه المجموعة.', '+ إضافة طالب', 'add-student');
     return `<div class="list stagger">${students.map(s => `
       <div class="list-item clickable" data-student="${s.id}">
         <div class="list-item-avatar">${UI.initials(s.name)}</div>
@@ -389,7 +389,7 @@ const Groups = {
   },
 
   renderLessonsTab(lessons) {
-    if (!lessons.length) return UI.emptyState(Icons.get('lessons', 36), 'لا توجد حصص', 'لم يتم جدولة حصص بعد.');
+    if (!lessons.length) return UI.emptyState('📚', 'لا توجد حصص', 'لم يتم جدولة حصص بعد.');
     const sorted = [...lessons].sort((a, b) => b.date.localeCompare(a.date));
     return `<div class="list stagger">${sorted.map(l => {
       const att = Storage.list(Storage.KEYS.attendance, a => a.lessonId === l.id).length;
@@ -402,7 +402,7 @@ const Groups = {
             </div>
             ${UI.lessonStatusBadge(l.status)}
           </div>
-          ${l.topic ? `<p style="margin-top:8px;font-size:13px;color:var(--text-secondary);">${Icons.get('book', 13)} ${Utils.escapeHTML(l.topic)}</p>` : ''}
+          ${l.topic ? `<p style="margin-top:8px;font-size:13px;color:var(--text-secondary);">📖 ${l.topic}</p>` : ''}
           ${att > 0 ? `<p style="margin-top:6px;font-size:12px;color:var(--text-tertiary);">✓ تم تسجيل حضور ${att} طالب</p>` : ''}
           ${l.status === 'مجدولة' ? `<button class="btn btn-primary btn-block" style="margin-top:8px;" data-start-lesson="${l.id}">بدء الحصة</button>` : ''}
         </div>
@@ -411,7 +411,7 @@ const Groups = {
   },
 
   renderExamsTab(exams) {
-    if (!exams.length) return UI.emptyState(Icons.get('exam', 36), 'لا توجد اختبارات', 'لم تُضف اختبارات لهذه المجموعة.');
+    if (!exams.length) return UI.emptyState('📝', 'لا توجد اختبارات', 'لم تُضف اختبارات لهذه المجموعة.');
     return `<div class="list stagger">${exams.map(e => {
       const grades = Storage.list(Storage.KEYS.grades, g => g.examId === e.id);
       const avg = grades.length ? Math.round(grades.reduce((s, g) => s + g.score / g.maxGrade * 100, 0) / grades.length) : 0;
@@ -428,7 +428,7 @@ const Groups = {
   },
 
   renderPaymentsTab(payments) {
-    if (!payments.length) return UI.emptyState(Icons.get('wallet', 36), 'لا توجد مدفوعات', 'لم تسجل أي مدفوعات.');
+    if (!payments.length) return UI.emptyState('💰', 'لا توجد مدفوعات', 'لم تسجل أي مدفوعات.');
     return `<div class="list stagger">${payments.map(p => {
       const s = Storage.find(Storage.KEYS.students, p.studentId);
       const st = UI.paymentStatus(p.paid || 0, p.required || 0);

@@ -1,7 +1,6 @@
 /* ============================================
    مُعلّمي | settings.js
-   الإعدادات: الحساب + المظهر + التعليمية + التقارير + أوزان الأداء
-              + النسخ الاحتياطي (عبر Backup) + الأمان + سجل النشاط
+   الإعدادات + الأمان + النسخ الاحتياطي
    ============================================ */
 
 const Settings = {
@@ -21,7 +20,7 @@ const Settings = {
 
       ${isDemo ? `
         <div class="alert alert-warning" style="margin-bottom: var(--space-4);">
-          <div class="alert-icon">${Icons.get('warn', 20)}</div>
+          <div class="alert-icon">⚠️</div>
           <div class="alert-body">
             <strong>وضع تجريبي مفعّل</strong>
             البيانات الحالية تجريبية. يمكنك مسحها من قسم النسخ الاحتياطي.
@@ -33,11 +32,11 @@ const Settings = {
         <h2 class="section-title" style="margin-bottom: var(--space-3);">الحساب</h2>
         <div class="card" style="margin-bottom: var(--space-3);">
           <div style="display:flex; align-items:center; gap: var(--space-3);">
-            <div class="avatar avatar-lg" style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));">${Utils.escapeHTML(UI.initials(teacher.name || 'م'))}</div>
+            <div class="avatar avatar-lg" style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));">${UI.initials(teacher.name || 'م')}</div>
             <div style="flex:1;">
-              <h3 style="font-weight: 700;">${Utils.escapeHTML(teacher.name || '—')}</h3>
-              <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">${Utils.escapeHTML(teacher.subject || '')}</p>
-              <p style="color: var(--text-tertiary); font-size: var(--font-size-xs); direction: ltr; text-align: right;">${Utils.escapeHTML(teacher.phone || '')}</p>
+              <h3 style="font-weight: 700;">${teacher.name || '—'}</h3>
+              <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">${teacher.subject || ''}</p>
+              <p style="color: var(--text-tertiary); font-size: var(--font-size-xs); direction: ltr; text-align: right;">${teacher.phone || ''}</p>
             </div>
           </div>
           <button class="btn btn-outline btn-block" style="margin-top: var(--space-3);" onclick="Settings.openProfileForm()">تعديل بيانات الحساب</button>
@@ -47,7 +46,9 @@ const Settings = {
       <div class="section">
         <h2 class="section-title" style="margin-bottom: var(--space-3);">المظهر</h2>
         <div class="settings-row" onclick="Settings.toggleTheme()">
-          <div class="settings-icon">${Icons.get('moon', 20)}</div>
+          <div class="settings-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </div>
           <div class="settings-body">
             <div class="settings-title">الوضع الداكن</div>
             <div class="settings-desc">${settings.theme === 'dark' ? 'مفعّل' : 'غير مفعّل'}</div>
@@ -62,78 +63,69 @@ const Settings = {
       <div class="section">
         <h2 class="section-title" style="margin-bottom: var(--space-3);">الإعدادات التعليمية</h2>
         <div class="settings-row" onclick="Settings.openSubjectsManager()">
-          <div class="settings-icon">${Icons.get('book', 20)}</div>
+          <div class="settings-icon">📖</div>
           <div class="settings-body">
             <div class="settings-title">المواد الدراسية</div>
             <div class="settings-desc">${subjects.length} مادة</div>
           </div>
-          ${Icons.get('forward', 20)}
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
         </div>
         <div class="settings-row" onclick="Settings.openStagesManager()">
-          <div class="settings-icon">${Icons.get('award', 20)}</div>
+          <div class="settings-icon">🎓</div>
           <div class="settings-body">
             <div class="settings-title">المراحل والصفوف</div>
             <div class="settings-desc">${stages.length} مراحل</div>
           </div>
-          ${Icons.get('forward', 20)}
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
         </div>
         <div class="settings-row" onclick="Settings.openThresholdForm()">
-          <div class="settings-icon">${Icons.get('warn', 20)}</div>
+          <div class="settings-icon">⚠️</div>
           <div class="settings-body">
             <div class="settings-title">حد تنبيه الغياب</div>
             <div class="settings-desc">${settings.absenceAlertThreshold || 3} حصص متتالية</div>
           </div>
-          ${Icons.get('forward', 20)}
-        </div>
-        <div class="settings-row" onclick="Settings.openWeightsForm()">
-          <div class="settings-icon">${Icons.get('chart', 20)}</div>
-          <div class="settings-body">
-            <div class="settings-title">أوزان حساب الأداء</div>
-            <div class="settings-desc">اختبارات ${settings.weights?.exams ?? 50}% • واجبات ${settings.weights?.assignments ?? 20}% • حضور ${settings.weights?.attendance ?? 10}% • مستمر ${settings.weights?.continuous ?? 20}%</div>
-          </div>
-          ${Icons.get('forward', 20)}
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
         </div>
       </div>
 
       <div class="section">
-        <h2 class="section-title" style="margin-bottom: var(--space-3);">إعدادات التقارير والتحليل الذكي</h2>
-        <div class="settings-row" onclick="Settings.openReportSettings()">
-          <div class="settings-icon">${Icons.get('file', 20)}</div>
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">المزامنة السحابية</h2>
+        <div class="settings-row" onclick="Settings.syncNow()">
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9"/><polyline points="21 3 21 9 15 9"/></svg></div>
           <div class="settings-body">
-            <div class="settings-title">بيانات التقرير والتوقيع</div>
-            <div class="settings-desc">${settings.reportCenter ? Utils.escapeHTML(settings.reportCenter) : 'لم يتم إدخال اسم المركز'} • ${settings.aiEnabled !== false ? 'التحليل الذكي مفعّل' : 'التحليل الذكي معطل'}</div>
+            <div class="settings-title">حالة المزامنة</div>
+            <div class="settings-desc" id="cloud-status-desc">${Settings.cloudStatusText()}</div>
           </div>
-          ${Icons.get('forward', 20)}
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
         </div>
       </div>
 
-      <div class="section" id="backup-section">
+      <div class="section">
         <h2 class="section-title" style="margin-bottom: var(--space-3);">النسخ الاحتياطي والبيانات</h2>
-        <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin: -6px 0 var(--space-3);">${Backup.lastBackupText()}</p>
         <div class="settings-row" onclick="Settings.exportData('json')">
-          <div class="settings-icon">${Icons.get('download', 20)}</div>
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
           <div class="settings-body">
             <div class="settings-title">تصدير البيانات (JSON)</div>
-            <div class="settings-desc">نسخة احتياطية كاملة مع التحقق</div>
+            <div class="settings-desc">نسخة احتياطية كاملة</div>
           </div>
         </div>
         <div class="settings-row" onclick="Settings.exportData('csv')">
-          <div class="settings-icon">${Icons.get('file', 20)}</div>
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
           <div class="settings-body">
             <div class="settings-title">تصدير الطلاب (CSV)</div>
             <div class="settings-desc">جدول بيانات الطلاب</div>
           </div>
         </div>
         <div class="settings-row" onclick="Settings.importData()">
-          <div class="settings-icon">${Icons.get('upload', 20)}</div>
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
           <div class="settings-body">
             <div class="settings-title">استيراد البيانات</div>
-            <div class="settings-desc">معاينة المحتوى ثم اختيار دمج أو استبدال</div>
+            <div class="settings-desc">من ملف JSON</div>
           </div>
         </div>
         <div class="settings-row" onclick="Settings.confirmClearAll()">
           <div class="settings-icon" style="background: var(--color-danger-soft); color: var(--color-danger);">
-            ${Icons.get('trash', 20)}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </div>
           <div class="settings-body">
             <div class="settings-title" style="color: var(--color-danger);">مسح جميع البيانات</div>
@@ -145,22 +137,14 @@ const Settings = {
       <div class="section">
         <h2 class="section-title" style="margin-bottom: var(--space-3);">الأمان</h2>
         <div class="settings-row" onclick="Settings.changePIN()">
-          <div class="settings-icon">${Icons.get('lock', 20)}</div>
+          <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <div class="settings-body">
-            <div class="settings-title">تغيير رمز المرور (PIN)</div>
-            <div class="settings-desc">رمز الدخول للتطبيق</div>
+            <div class="settings-title">${teacher.authMethod === 'email' ? 'تغيير كلمة المرور' : 'تغيير رمز المرور (PIN)'}</div>
+            <div class="settings-desc">${teacher.authMethod === 'email' ? 'كلمة مرور الدخول للبريد' : 'رمز الدخول للتطبيق'}</div>
           </div>
-        </div>
-        <div class="settings-row" onclick="Settings.showAuditLog()">
-          <div class="settings-icon">${Icons.get('eye', 20)}</div>
-          <div class="settings-body">
-            <div class="settings-title">سجل النشاط</div>
-            <div class="settings-desc">آخر العمليات الحساسة (حذف/نسخ/استيراد)</div>
-          </div>
-          ${Icons.get('forward', 20)}
         </div>
         <div class="settings-row" onclick="Settings.logout()">
-          <div class="settings-icon" style="background: var(--color-danger-soft); color: var(--color-danger);">${Icons.get('logout', 20)}</div>
+          <div class="settings-icon" style="background: var(--color-danger-soft); color: var(--color-danger);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
           <div class="settings-body">
             <div class="settings-title" style="color: var(--color-danger);">تسجيل الخروج</div>
             <div class="settings-desc">العودة لشاشة الدخول</div>
@@ -170,30 +154,30 @@ const Settings = {
 
       <div class="section" style="text-align: center; padding: var(--space-4) 0; color: var(--text-tertiary); font-size: var(--font-size-xs);">
         <p style="font-weight: 700; color: var(--text-secondary);">مُعلّمي | Moallemy</p>
-        <p>الإصدار ${Utils.appVersion()}</p>
-        <p style="margin-top: 4px;">صُنع بشغف للمدرسين في مصر</p>
-        <p style="margin-top: 10px;">
-          <a
-            href="https://wa.me/201066227553"
-            target="_blank"
-            rel="noopener noreferrer"
-            style="
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              gap: 8px;
-              padding: 9px 16px;
-              border-radius: 12px;
-              background: #25D366;
-              color: #fff;
-              font-weight: 700;
-              text-decoration: none;
-              box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
-            "
-          >
-            تواصل معنا على واتساب
-          </a>
-        </p>
+        <p>الإصدار 1.0.0</p>
+        <p style="margin-top: 4px;">صُنع بشغف للمدرسين في مصر 🌿</p>
+<p style="margin-top: 10px;">
+  <a
+    href="https://wa.me/201066227553"
+    target="_blank"
+    rel="noopener noreferrer"
+    style="
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 12px;
+      background: #25D366;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+    "
+  >
+    💬 تواصل معنا على واتساب
+  </a>
+</p>
       </div>
     `;
   },
@@ -201,6 +185,37 @@ const Settings = {
   bind() {
     document.getElementById('theme-toggle')?.addEventListener('change', (e) => {
       this.applyTheme(e.target.checked ? 'dark' : 'light');
+    });
+  },
+
+  cloudStatusText() {
+    if (!(window.Cloud && window.SupabaseConfig)) return 'غير متاحة';
+    const s = Cloud.status();
+    if (s.demo) return 'الوضع التجريبي لا يُزامن';
+    if (!s.ready) return 'غير متاحة — تحقق من الاتصال';
+    if (!s.authed) return 'سجّل الدخول للتفعيل';
+    if (!s.online) return 'غير متصل — سيُرفع تلقائيًا';
+    if (s.pending > 0) return `جارٍ الرفع (${s.pending} تغيير)...`;
+    const last = s.lastSync ? ' — آخر مزامنة ' + UI.relativeTime(s.lastSync) : '';
+    return 'مُتصل وكل البيانات محفوظة' + last;
+  },
+
+  syncNow() {
+    if (!(window.Cloud && window.SupabaseConfig) || !SupabaseConfig.isReady()) {
+      UI.toast('المزامنة غير متاحة حاليًا', 'warning');
+      return;
+    }
+    const s = Cloud.status();
+    if (s.demo || !s.authed) {
+      UI.toast('سجّل الدخول بحسابك لتفعيل المزامنة', 'info');
+      return;
+    }
+    UI.toast('جارٍ المزامنة...', 'info', 1500);
+    Cloud.pull(true).then(() => Cloud.flush()).then(() => {
+      const st = Cloud.status();
+      if (st.pending > 0) UI.toast('لم تكتمل المزامنة — ستعيد المحاولة تلقائيًا', 'warning');
+      else UI.toast('تمت المزامنة بنجاح', 'success');
+      App.navigate('settings');
     });
   },
 
@@ -230,25 +245,25 @@ const Settings = {
         <form id="profile-form">
           <div class="field">
             <label>اسم المدرس</label>
-            <input type="text" name="name" required value="${Utils.escapeHTML(teacher.name || '')}">
+            <input type="text" name="name" required value="${teacher.name || ''}">
           </div>
           <div class="field">
             <label>المادة</label>
             <select name="subject">
-              ${subjects.map(s => `<option value="${Utils.escapeHTML(s.name)}" ${teacher.subject === s.name ? 'selected' : ''}>${Utils.escapeHTML(s.name)}</option>`).join('')}
+              ${subjects.map(s => `<option value="${s.name}" ${teacher.subject === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}
             </select>
           </div>
           <div class="field">
             <label>رقم الهاتف</label>
-            <input type="tel" name="phone" value="${Utils.escapeHTML(teacher.phone || '')}">
+            <input type="tel" name="phone" value="${teacher.phone || ''}">
           </div>
           <div class="field">
             <label>البريد الإلكتروني</label>
-            <input type="email" name="email" value="${Utils.escapeHTML(teacher.email || '')}">
+            <input type="email" name="email" value="${teacher.email || ''}">
           </div>
           <div class="field">
             <label>نبذة تعريفية</label>
-            <textarea name="bio" placeholder="معلومات عنك...">${Utils.escapeHTML(teacher.bio || '')}</textarea>
+            <textarea name="bio" placeholder="معلومات عنك...">${teacher.bio || ''}</textarea>
           </div>
           <div class="action-row">
             <button type="button" class="btn btn-secondary" onclick="UI.closeModal()" style="flex:1">إلغاء</button>
@@ -269,153 +284,6 @@ const Settings = {
     });
   },
 
-  /* ===== أوزان حساب الأداء ===== */
-  openWeightsForm() {
-    const settings = Storage.get(Storage.KEYS.settings, {});
-    const w = settings.weights || { exams: 50, assignments: 20, attendance: 10, continuous: 20 };
-
-    UI.modal({
-      title: 'أوزان حساب الأداء',
-      body: `
-        <p style="font-size:var(--font-size-sm); color:var(--text-secondary); margin-bottom: var(--space-3); line-height:1.7;">
-          حدد وزن كل مكون في متوسط الأداء العام (نسبة مئوية). يجب أن يكون المجموع 100%.
-          المكونات التي لا توجد بياناتها تُستبعد تلقائيًا وتُعاد موازنة الباقي.
-        </p>
-        <div class="field-row">
-          <div class="field">
-            <label>الاختبارات (%)</label>
-            <input type="number" id="w-exams" min="0" max="100" value="${w.exams}">
-          </div>
-          <div class="field">
-            <label>الواجبات (%)</label>
-            <input type="number" id="w-assign" min="0" max="100" value="${w.assignments}">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label>الحضور (%)</label>
-            <input type="number" id="w-att" min="0" max="100" value="${w.attendance}">
-          </div>
-          <div class="field">
-            <label>التقييم المستمر (%)</label>
-            <input type="number" id="w-cont" min="0" max="100" value="${w.continuous}">
-          </div>
-        </div>
-        <div id="weights-sum" style="text-align:center; margin: var(--space-3) 0; font-weight:700;"></div>
-        <button class="btn btn-primary btn-block" onclick="Settings.saveWeights()">حفظ الأوزان</button>
-      `
-    });
-
-    const updateSum = () => {
-      const sum = ['w-exams', 'w-assign', 'w-att', 'w-cont']
-        .reduce((s, id) => s + (parseInt(document.getElementById(id).value) || 0), 0);
-      const el = document.getElementById('weights-sum');
-      el.textContent = `المجموع: ${sum}%`;
-      el.style.color = sum === 100 ? 'var(--color-success)' : 'var(--color-danger)';
-    };
-    ['w-exams', 'w-assign', 'w-att', 'w-cont'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateSum);
-    });
-    updateSum();
-  },
-
-  saveWeights() {
-    const weights = {
-      exams: parseInt(document.getElementById('w-exams').value) || 0,
-      assignments: parseInt(document.getElementById('w-assign').value) || 0,
-      attendance: parseInt(document.getElementById('w-att').value) || 0,
-      continuous: parseInt(document.getElementById('w-cont').value) || 0
-    };
-    const sum = Object.values(weights).reduce((s, v) => s + v, 0);
-    if (sum !== 100) {
-      UI.toast(`المجموع يجب أن يكون 100% (الحالي: ${sum}%)`, 'error');
-      return;
-    }
-    const settings = Storage.get(Storage.KEYS.settings, {});
-    settings.weights = weights;
-    Storage.set(Storage.KEYS.settings, settings);
-    UI.toast('تم حفظ الأوزان - ستطبق على كل حسابات الأداء الجديدة', 'success');
-    UI.closeModal();
-    App.navigate('settings');
-  },
-
-  /* ===== إعدادات التقارير ===== */
-  openReportSettings() {
-    const settings = Storage.get(Storage.KEYS.settings, {});
-
-    UI.modal({
-      title: 'إعدادات التقارير والتحليل الذكي',
-      size: 'large',
-      body: `
-        <form id="report-settings-form">
-          <div class="field">
-            <label>اسم المركز / السينتر (يظهر في رأس التقرير المطبوع)</label>
-            <input type="text" name="reportCenter" value="${Utils.escapeHTML(settings.reportCenter || '')}" placeholder="مثال: سنتر النور التعليمي">
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>هاتف التواصل في التقارير</label>
-              <input type="tel" name="reportPhone" value="${Utils.escapeHTML(settings.reportPhone || '')}" placeholder="01xxxxxxxxx">
-            </div>
-            <div class="field">
-              <label>البريد الإلكتروني</label>
-              <input type="email" name="reportEmail" value="${Utils.escapeHTML(settings.reportEmail || '')}">
-            </div>
-          </div>
-          <div class="field">
-            <label>عبارة التوقيع في نهاية التقارير</label>
-            <input type="text" name="reportSignature" value="${Utils.escapeHTML(settings.reportSignature || '')}" placeholder="مع خالص التحية والتقدير">
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>لون التقارير المطبوعة</label>
-              <input type="color" name="reportColor" value="${settings.reportColor || '#8B5E34'}" style="height:44px; padding:4px;">
-            </div>
-            <div class="field">
-              <label>أسلوب التقارير الافتراضي</label>
-              <select name="reportStyle">
-                <option value="مختصر" ${settings.reportStyle === 'مختصر' ? 'selected' : ''}>مختصر</option>
-                <option value="متوسط" ${(!settings.reportStyle || settings.reportStyle === 'متوسط') ? 'selected' : ''}>احترافي (متوسط)</option>
-                <option value="مفصل" ${settings.reportStyle === 'مفصل' ? 'selected' : ''}>مفصل</option>
-              </select>
-            </div>
-          </div>
-          <div class="settings-row" style="padding: var(--space-2) 0;" onclick="event.stopPropagation();">
-            <div class="settings-body">
-              <div class="settings-title">تفعيل التحليل الذكي (محلي)</div>
-              <div class="settings-desc">يعمل من بياناتك بدون إنترنت - عند التعطيل يبقى التقرير اليدوي متاحًا</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" name="aiEnabled" ${settings.aiEnabled !== false ? 'checked' : ''}>
-              <span class="switch-slider"></span>
-            </label>
-          </div>
-          <div class="action-row" style="margin-top: var(--space-4);">
-            <button type="button" class="btn btn-secondary" onclick="UI.closeModal()" style="flex:1">إلغاء</button>
-            <button type="submit" class="btn btn-primary" style="flex:1">حفظ</button>
-          </div>
-        </form>
-      `
-    });
-
-    document.getElementById('report-settings-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const settings = Storage.get(Storage.KEYS.settings, {});
-      settings.reportCenter = (fd.get('reportCenter') || '').trim();
-      settings.reportPhone = (fd.get('reportPhone') || '').trim();
-      settings.reportEmail = (fd.get('reportEmail') || '').trim();
-      settings.reportSignature = (fd.get('reportSignature') || '').trim();
-      settings.reportColor = fd.get('reportColor') || '#8B5E34';
-      settings.reportStyle = fd.get('reportStyle') || 'متوسط';
-      settings.aiEnabled = fd.get('aiEnabled') === 'on';
-      Storage.set(Storage.KEYS.settings, settings);
-      UI.toast('تم حفظ إعدادات التقارير', 'success');
-      UI.closeModal();
-      App.navigate('settings');
-    });
-  },
-
   openSubjectsManager() {
     const subjects = Storage.get(Storage.KEYS.subjects, []);
     UI.modal({
@@ -425,11 +293,11 @@ const Settings = {
           ${subjects.map(s => `
             <div class="list-item">
               <div class="list-item-body">
-                <div class="list-item-title">${Utils.escapeHTML(s.name)}</div>
+                <div class="list-item-title">${s.name}</div>
                 <div class="list-item-subtitle">${s.isDefault ? 'مادة افتراضية' : 'مادة مخصصة'}</div>
               </div>
               <button class="icon-btn" onclick="Settings.deleteSubject('${s.id}')" aria-label="حذف">
-                ${Icons.get('trash', 18)}
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
           `).join('')}
@@ -478,9 +346,9 @@ const Settings = {
         <div class="list">
           ${stages.map(s => `
             <div class="card" style="margin-bottom: var(--space-2);">
-              <div style="font-weight: 700; margin-bottom: var(--space-2);">${Utils.escapeHTML(s.name)}</div>
+              <div style="font-weight: 700; margin-bottom: var(--space-2);">${s.name}</div>
               <div style="display:flex; flex-wrap:wrap; gap:4px;">
-                ${s.levels.map(l => `<span class="badge">${Utils.escapeHTML(l)}</span>`).join('')}
+                ${s.levels.map(l => `<span class="badge">${l}</span>`).join('')}
               </div>
             </div>
           `).join('')}
@@ -508,7 +376,7 @@ const Settings = {
   saveThreshold() {
     const val = parseInt(document.getElementById('threshold-input').value) || 3;
     const settings = Storage.get(Storage.KEYS.settings, {});
-    settings.absenceAlertThreshold = Utils.clamp(val, 1, 10);
+    settings.absenceAlertThreshold = val;
     Storage.set(Storage.KEYS.settings, settings);
     UI.toast('تم حفظ الإعداد', 'success');
     UI.closeModal();
@@ -516,87 +384,144 @@ const Settings = {
   },
 
   changePIN() {
+    const t = Auth.getTeacher() || {};
+    const isEmail = t.authMethod === 'email';
+    const title = isEmail ? 'تغيير كلمة المرور' : 'تغيير رمز المرور';
+    const curLabel = isEmail ? 'كلمة المرور الحالية' : 'الرمز الحالي';
+    const newLabel = isEmail ? 'كلمة المرور الجديدة' : 'الرمز الجديد';
+    const confLabel = isEmail ? 'تأكيد كلمة المرور الجديدة' : 'تأكيد الرمز الجديد';
+    const minLen = isEmail ? 6 : 4;
+    const inputAttrs = isEmail
+      ? 'autocomplete="current-password"'
+      : 'inputmode="numeric" maxlength="6"';
+    const newInputAttrs = isEmail
+      ? 'autocomplete="new-password"'
+      : 'inputmode="numeric" maxlength="6"';
     UI.modal({
-      title: 'تغيير رمز المرور',
+      title,
       body: `
         <form id="pin-form">
           <div class="field">
-            <label>الرمز الحالي</label>
-            <input type="password" name="current" inputmode="numeric" maxlength="6" required>
+            <label>${curLabel}</label>
+            <input type="password" name="current" ${inputAttrs} required>
           </div>
           <div class="field">
-            <label>الرمز الجديد</label>
-            <input type="password" name="new" inputmode="numeric" maxlength="6" required min="4">
+            <label>${newLabel}</label>
+            <input type="password" name="new" ${newInputAttrs} required minlength="${minLen}">
           </div>
           <div class="field">
-            <label>تأكيد الرمز الجديد</label>
-            <input type="password" name="confirm" inputmode="numeric" maxlength="6" required>
+            <label>${confLabel}</label>
+            <input type="password" name="confirm" ${newInputAttrs} required>
           </div>
-          <button type="submit" class="btn btn-primary btn-block">تغيير الرمز</button>
+          <button type="submit" class="btn btn-primary btn-block">${isEmail ? 'تغيير كلمة المرور' : 'تغيير الرمز'}</button>
         </form>
       `
     });
-    document.getElementById('pin-form').addEventListener('submit', (e) => {
+    document.getElementById('pin-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
-      const teacher = Auth.getTeacher();
-      if (data.current !== teacher.pin) {
-        UI.toast('الرمز الحالي غير صحيح', 'error');
-        return;
-      }
-      if (data.new.length < 4) {
-        UI.toast('الرمز الجديد يجب أن يكون 4 أرقام على الأقل', 'error');
+      if (data.new.length < minLen) {
+        UI.toast(isEmail
+          ? 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل'
+          : 'الرمز الجديد يجب أن يكون 4 أرقام على الأقل', 'error');
         return;
       }
       if (data.new !== data.confirm) {
-        UI.toast('الرمزان غير متطابقين', 'error');
+        UI.toast(isEmail ? 'كلمتا المرور غير متطابقتين' : 'الرمزان غير متطابقين', 'error');
         return;
       }
-      Auth.updateTeacher({ pin: data.new });
-      Storage.audit('تغيير رمز المرور');
-      UI.toast('تم تغيير رمز المرور بنجاح', 'success');
+      if (!(window.SupabaseConfig && SupabaseConfig.isReady()) || Storage.isDemoMode()) {
+        UI.toast('التغيير يتطلب الاتصال بالإنترنت وحسابًا حقيقيًا', 'warning');
+        return;
+      }
+      setLoading(true);
+      const res = await Auth.changePIN(data.current, data.new);
+      setLoading(false);
+      if (!res.ok) {
+        UI.toast(res.message || 'تعذر التغيير', 'error');
+        return;
+      }
+      UI.toast(isEmail ? 'تم تغيير كلمة المرور بنجاح' : 'تم تغيير رمز المرور بنجاح', 'success');
       UI.closeModal();
     });
+
+    function setLoading(on) {
+      const btn = document.querySelector('#pin-form button[type="submit"]');
+      if (!btn) return;
+      btn.disabled = on;
+      btn.textContent = on ? 'جارٍ التغيير...' : (isEmail ? 'تغيير كلمة المرور' : 'تغيير الرمز');
+    }
   },
 
-  showAuditLog() {
-    const log = Storage.getAuditLog();
-    UI.modal({
-      title: 'سجل النشاط',
-      body: `
-        ${log.length === 0 ? `<p style="text-align:center; color:var(--text-tertiary); padding: var(--space-4);">لا توجد عمليات مسجلة بعد</p>` : `
-          <div class="list">
-            ${log.map(item => `
-              <div class="list-item">
-                <div class="list-item-body">
-                  <div class="list-item-title">${Utils.escapeHTML(item.action)}</div>
-                  <div class="list-item-subtitle">${Utils.escapeHTML(item.details || '')}</div>
-                </div>
-                <span style="font-size:var(--font-size-xs); color:var(--text-tertiary); white-space:nowrap;">${UI.relativeTime(item.at)}</span>
-              </div>
-            `).join('')}
-          </div>
-        `}
-      `
-    });
-  },
-
-  // تُفوض لوحدة Backup الموحدة
   exportData(format = 'json') {
-    if (format === 'json') Backup.exportJson();
-    else if (format === 'csv') Backup.exportCsv();
+    if (format === 'json') {
+      const data = Storage.exportAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `moallemy-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      UI.toast('تم تصدير البيانات بنجاح', 'success');
+    } else if (format === 'csv') {
+      const students = Storage.list(Storage.KEYS.students);
+      const headers = ['الاسم', 'الصف', 'الشعبة', 'المادة', 'المجموعة', 'ولي الأمر', 'الهاتف', 'الاشتراك', 'الحالة'];
+      const rows = students.map(s => {
+        const g = Storage.find(Storage.KEYS.groups, s.groupId);
+        return [s.name, s.className, s.section, s.subject, g ? g.name : '', s.parentName, s.parentPhone, s.subscriptionAmount, s.status];
+      });
+      const csv = [headers, ...rows].map(r => r.map(c => `"${c || ''}"`).join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `moallemy-students-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      UI.toast('تم تصدير بيانات الطلاب', 'success');
+    }
   },
 
   importData() {
-    Backup.importDialog();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          UI.confirm('سيتم استبدال جميع البيانات الحالية بالبيانات المستوردة. متابعة؟', () => {
+            if (Storage.importAll(data, 'replace')) {
+              UI.toast('تم استيراد البيانات بنجاح', 'success');
+              setTimeout(() => location.reload(), 1000);
+            } else {
+              UI.toast('ملف غير صحيح', 'error');
+            }
+          }, { title: 'استيراد البيانات', confirmText: 'متابعة' });
+        } catch (err) {
+          UI.toast('تعذر قراءة الملف', 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+    input.click();
   },
 
   confirmClearAll() {
-    UI.confirm('سيتم مسح جميع الطلاب والمجموعات والحصص والمدفوعات نهائيًا. لا يمكن التراجع. ننصح بتصدير نسخة احتياطية أولًا.', () => {
-      UI.confirm('تأكيد أخير: مسح كل البيانات؟', () => {
+    UI.confirm('سيتم مسح جميع الطلاب والمجموعات والحصص والمدفوعات نهائيًا من جهازك ومن السحابة. لا يمكن التراجع. ننصح بتصدير نسخة احتياطية أولًا.', async () => {
+      UI.confirm('تأكيد أخير: مسح كل البيانات؟', async () => {
+        // امسح من السحابة أولًا (خصوصًا إذا كان الحساب مُزامنًا)
+        if (window.Cloud && Cloud.isAuthed()) {
+          const wiped = await Cloud.wipeCloudData();
+          if (!wiped) UI.toast('تعذر مسح البيانات السحابية — أعد المحاولة', 'warning');
+        }
+        Cloud.suspend();
         Storage.clearAll();
         Storage.setDemoMode(false);
-        Storage.audit('مسح جميع البيانات');
         UI.toast('تم مسح جميع البيانات', 'success');
         setTimeout(() => location.reload(), 1000);
       }, { title: 'تأكيد نهائي', confirmText: 'نعم، امسح الكل' });

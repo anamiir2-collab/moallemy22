@@ -104,7 +104,7 @@ const Payments = {
     }
 
     if (filtered.length === 0) {
-      container.innerHTML = UI.emptyState(Icons.get('wallet', 36), 'لا توجد مدفوعات', 'لم تسجل أي مدفوعات بعد.');
+      container.innerHTML = UI.emptyState('💰', 'لا توجد مدفوعات', 'لم تسجل أي مدفوعات بعد.');
       return;
     }
 
@@ -305,10 +305,10 @@ const Payments = {
           title: 'تم تسجيل الدفعة',
           body: `
             <div style="text-align:center; padding: var(--space-4) 0;">
-              <div style="width:60px;height:60px;background:var(--color-success-soft);color:var(--color-success);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);">${Icons.get('check', 28)}</div>
+              <div style="width:60px;height:60px;background:var(--color-success-soft);color:var(--color-success);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-3);font-size:28px;">✓</div>
               <h3 style="font-weight:700;margin-bottom:8px;">تم بنجاح</h3>
-              <p style="color:var(--text-secondary);margin-bottom:var(--space-4);">سجلت دفعة ${UI.money(newPaid)} من ${Utils.escapeHTML(student.name)}</p>
-              <button class="btn btn-primary btn-block" onclick="Payments.showReceipt('${payment.id}')">${Icons.get('file', 16)} عرض الإيصال</button>
+              <p style="color:var(--text-secondary);margin-bottom:var(--space-4);">سجلت دفعة ${UI.money(newPaid)} من ${student.name}</p>
+              <button class="btn btn-primary btn-block" onclick="Payments.showReceipt('${payment.id}')">🧾 عرض الإيصال</button>
               <button class="btn btn-text btn-block" style="margin-top:8px;" onclick="UI.closeModal()">إغلاق</button>
             </div>
           `
@@ -348,7 +348,7 @@ const Payments = {
           <div class="receipt-row"><span class="label">المدفوع</span><span class="value">${UI.money(p.paid)}</span></div>
           <div class="receipt-row receipt-total"><span class="label">المتبقي</span><span class="value">${UI.money(remaining)}</span></div>
           <hr style="border: none; border-top: 1px dashed var(--color-surface-3); margin: var(--space-3) 0;">
-          <p style="text-align:center; font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: var(--space-3);">شكرًا لتعاملكم معنا</p>
+          <p style="text-align:center; font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: var(--space-3);">شكرًا لتعاملكم معنا 🌿</p>
         </div>
 
         <div class="action-row" style="margin-top: var(--space-4);">
@@ -374,7 +374,7 @@ const Payments = {
     }
     const teacher = Auth.getTeacher();
     const remaining = (p.required || 0) - (p.paid || 0);
-    const msg = `إيصال دفع - مُعلّمي\n\n` +
+    const msg = `*إيصال دفع - مُعلّمي*\n\n` +
       `أ/ ${teacher ? teacher.name : ''}\n` +
       `الطالب: ${s.name}\n` +
       `الشهر: ${p.month}\n` +
@@ -383,35 +383,9 @@ const Payments = {
       `المتبقي: ${UI.money(remaining)}\n` +
       `طريقة الدفع: ${p.method || '—'}\n` +
       `التاريخ: ${UI.formatDate(p.date)}\n\n` +
-      `شكرًا لتعاملكم معنا`;
-
-    // معاينة وتأكيد قبل الفتح - لا إرسال تلقائي
-    UI.modal({
-      title: 'معاينة الإيصال عبر WhatsApp',
-      body: `
-        <div style="display:flex; align-items:center; gap: var(--space-3); margin-bottom: var(--space-3);">
-          <div class="avatar avatar-lg">${Utils.escapeHTML(UI.initials(s.name))}</div>
-          <div>
-            <div style="font-weight:700;">${Utils.escapeHTML(s.parentName || 'ولي أمر الطالب')}</div>
-            <div style="font-size:var(--font-size-sm); color:var(--text-tertiary); direction:ltr; text-align:right;">+${Utils.escapeHTML(String(s.parentPhone).replace(/^0/, '20'))}</div>
-          </div>
-        </div>
-        <div class="whatsapp-preview">${Utils.escapeHTML(msg).replace(/\n/g, '<br>')}</div>
-        <div class="action-row" style="margin-top: var(--space-3);">
-          <button class="btn btn-secondary" id="rc-copy" style="flex:1;">${Icons.get('copy', 16)} نسخ</button>
-          <button class="btn btn-whatsapp" id="rc-send" style="flex:1;">${Icons.get('whatsapp', 16)} تأكيد وفتح</button>
-        </div>
-      `
-    });
-    document.getElementById('rc-copy').addEventListener('click', async () => {
-      const ok = await Utils.copyText(msg);
-      UI.toast(ok ? 'تم نسخ الإيصال' : 'تعذر النسخ', ok ? 'success' : 'error');
-    });
-    document.getElementById('rc-send').addEventListener('click', () => {
-      const phone = String(s.parentPhone).replace(/^0/, '20');
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-      UI.toast('تم فتح واتساب - أكمل الإرسال من هناك', 'success');
-    });
+      `شكرًا لتعاملكم معنا 🌿`;
+    const phone = s.parentPhone.replace(/^0/, '20');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   },
 
   openQuick() {

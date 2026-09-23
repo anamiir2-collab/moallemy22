@@ -369,6 +369,37 @@ input, select, textarea {
 .auth-form { display: none; flex-direction: column; gap: var(--space-4); }
 .auth-form.active { display: flex; animation: fadeIn var(--transition-base); }
 
+/* مبدّل طريقة الدخول/التسجيل (هاتف / بريد) — أصغر من تبويبات المصادقة الرئيسية */
+.auth-switch {
+  margin-bottom: var(--space-4);
+}
+
+.auth-switch .auth-tab {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+}
+
+/* رابط نسيت كلمة المرور — في بداية السطر (RTL) */
+.forgot-link {
+  align-self: flex-start;
+  padding: 0;
+  margin-top: calc(-1 * var(--space-2));
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ملاحظة صغيرة داخل نماذج المصادقة */
+.auth-note {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.7;
+}
+
 /* ===== Layout ===== */
 .main-app {
   min-height: 100vh;

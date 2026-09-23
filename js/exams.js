@@ -60,7 +60,7 @@ const Exams = {
   },
 
   renderList(exams, emptyTitle, emptyText) {
-    if (!exams.length) return UI.emptyState(Icons.get('exam', 36), emptyTitle, emptyText || '');
+    if (!exams.length) return UI.emptyState('📝', emptyTitle, emptyText || '');
     return `<div class="list stagger">${exams.map(e => this.renderCard(e)).join('')}</div>`;
   },
 
@@ -71,7 +71,7 @@ const Exams = {
     const avg = grades.length ? Math.round(grades.reduce((s, g) => s + g.score / g.maxGrade * 100, 0) / grades.length) : 0;
     return `
       <div class="list-item clickable" data-exam="${e.id}">
-        <div class="quick-action-icon ${isPast ? 'success' : 'warning'}">${Icons.get('exam', 18)}</div>
+        <div class="quick-action-icon ${isPast ? 'success' : 'warning'}">📝</div>
         <div class="list-item-body">
           <div class="list-item-title">${e.name}</div>
           <div class="list-item-subtitle">${group ? group.name : ''} • ${UI.formatDate(e.date)}</div>
@@ -204,7 +204,7 @@ const Exams = {
           <button class="btn btn-primary btn-sm" onclick="Exams.openGradeEntry('${examId}')">إدخال / تعديل الدرجات</button>
         </div>
 
-        ${grades.length === 0 ? UI.emptyState(Icons.get('exam', 36), 'لم تُسجل درجات', 'اضغط زر إدخال الدرجات لتسجيل درجات الطلاب.') : `
+        ${grades.length === 0 ? UI.emptyState('📝', 'لم تُسجل درجات', 'اضغط زر إدخال الدرجات لتسجيل درجات الطلاب.') : `
           <div class="list">
             ${grades.map(g => {
               const s = Storage.find(Storage.KEYS.students, g.studentId);
@@ -287,7 +287,7 @@ const Exams = {
         }
         count++;
       });
-      UI.toast(`تم حفظ ${count} درجة`, 'success');
+      UI.toast(`تم حفظ ${count} درجة ✓`, 'success');
       UI.closeModal();
       this.openDetail(examId);
     });

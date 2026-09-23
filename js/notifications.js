@@ -1,6 +1,6 @@
 /* ============================================
    مُعلّمي | notifications.js
-   الإشعارات داخل التطبيق + توليد تلقائي للتنبيهات المهمة
+   الإشعارات داخل التطبيق
    ============================================ */
 
 const Notifications = {
@@ -53,14 +53,14 @@ const Notifications = {
     const notifs = Storage.list(Storage.KEYS.notifications).sort((a, b) => b.createdAt - a.createdAt);
 
     if (notifs.length === 0) {
-      container.innerHTML = UI.emptyState(Icons.get('bell', 36), 'لا توجد إشعارات', 'ستظهر هنا التنبيهات الجديدة.');
+      container.innerHTML = UI.emptyState('🔔', 'لا توجد إشعارات', 'ستظهر هنا التنبيهات الجديدة.');
       return;
     }
 
     const iconMap = {
-      lesson: 'lessons', exam: 'exam', assignment: 'assignment', attendance: 'attendance',
-      payment: 'payment', report: 'file', student: 'user', group: 'groups',
-      absence: 'warn', announcement: 'bell', generic: 'bell'
+      lesson: '📚', exam: '📝', assignment: '📋', attendance: '✓',
+      payment: '💰', report: '📊', student: '👤', group: '👥',
+      absence: '⚠️', announcement: '📢', generic: '🔔'
     };
     const colorMap = {
       lesson: 'info', exam: 'warning', assignment: 'info', attendance: 'success',
@@ -70,13 +70,13 @@ const Notifications = {
 
     container.innerHTML = `<div class="list stagger">${notifs.map(n => `
       <div class="list-item clickable ${n.read ? '' : 'unread'}" data-notif="${n.id}" style="${n.read ? '' : 'background: var(--color-primary-softer); border-inline-start: 3px solid var(--color-primary);'}">
-        <div class="quick-action-icon ${colorMap[n.type] || ''}">${Icons.get(iconMap[n.type] || 'bell', 18)}</div>
+        <div class="quick-action-icon ${colorMap[n.type] || ''}">${iconMap[n.type] || '🔔'}</div>
         <div class="list-item-body">
-          <div class="list-item-title">${Utils.escapeHTML(n.title)}</div>
-          <div class="list-item-subtitle">${Utils.escapeHTML(n.message)}</div>
+          <div class="list-item-title">${n.title}</div>
+          <div class="list-item-subtitle">${n.message}</div>
           <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">${UI.relativeTime(n.createdAt)}</div>
         </div>
-        ${n.read ? '' : '<span style="width:8px;height:8px;border-radius:50%;background:var(--color-primary);flex-shrink:0;"></span>'}
+        ${n.read ? '' : '<span style="width:8px;height:8px;border-radius:50%;background:var(--color-primary);"></span>'}
       </div>
     `).join('')}</div>`;
 
@@ -90,6 +90,7 @@ const Notifications = {
           el.style.borderInlineStart = '';
           this.updateBadge();
         }
+        // Navigate based on type
         if (n) {
           if (n.type === 'lesson') App.navigate('lessons');
           else if (n.type === 'student') App.navigate('students');
@@ -97,7 +98,6 @@ const Notifications = {
           else if (n.type === 'exam') App.navigate('exams');
           else if (n.type === 'assignment') App.navigate('assignments');
           else if (n.type === 'payment') App.navigate('payments');
-          else if (n.type === 'report') App.navigate('reports');
         }
       });
     });
@@ -109,78 +109,6 @@ const Notifications = {
     });
     this.updateBadge();
     return notif;
-  },
-
-  /**
-   * توليد تلقائي للتنبيهات المهمة مع منع التكرار (مرة واحدة يوميًا لكل نوع)
-   * تُستدعى عند فتح التطبيق
-   */
-  refreshAutoAlerts() {
-    const today = Utils.today();
-    const settings = Storage.get(Storage.KEYS.settings, {});
-    const threshold = settings.absenceAlertThreshold || 3;
-    const existing = Storage.list(Storage.KEYS.notifications);
-    const autoKey = (key) => existing.some(n => n.autoKey === key); // مفتاح منع التكرار
-
-    // 1) اختبار غدًا
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
-    const exams = Storage.list(Storage.KEYS.exams, e => e.date === tomorrowStr);
-    exams.forEach(e => {
-      const key = `exam_${e.id}_${tomorrowStr}`;
-      if (!autoKey(key)) {
-        const g = Storage.find(Storage.KEYS.groups, e.groupId);
-        Storage.insert(Storage.KEYS.notifications, {
-          type: 'exam', autoKey: key,
-          title: 'اختبار غدًا',
-          message: `${e.name} - مجموعة ${g ? g.name : ''}`,
-          read: false
-        });
-      }
-    });
-
-    // 2) طلاب كثيرو غياب (يوميًا)
-    const absStudents = Storage.list(Storage.KEYS.students, s => s.status === 'نشط').filter(s => {
-      const lessons = Storage.list(Storage.KEYS.lessons, l => l.groupId === s.groupId && l.status === 'تمت')
-        .sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, threshold);
-      if (lessons.length < threshold) return false;
-      const sAtt = Storage.list(Storage.KEYS.attendance, a => a.studentId === s.id);
-      return lessons.every(l => sAtt.some(a => a.lessonId === l.id && a.status === 'غائب'));
-    });
-    if (absStudents.length) {
-      const key = `absence_${today}`;
-      if (!autoKey(key)) {
-        Storage.insert(Storage.KEYS.notifications, {
-          type: 'absence', autoKey: key,
-          title: 'تنبيه غياب متكرر',
-          message: `${absStudents.length} طالب غابوا عن آخر ${threshold} حصص متتالية`,
-          read: false
-        });
-      }
-    }
-
-    // 3) مدفوعات مستحقة للشهر الحالي (مرة أسبوعيًا)
-    const weekKey = `payments_${Utils.currentMonth()}_w${Math.floor(new Date().getDate() / 7)}`;
-    if (!autoKey(weekKey)) {
-      const payments = Storage.list(Storage.KEYS.payments, p => p.month === Utils.currentMonth());
-      const unpaid = payments.filter(p => (p.required || 0) - (p.paid || 0) > 0);
-      if (unpaid.length >= 3) {
-        Storage.insert(Storage.KEYS.notifications, {
-          type: 'payment', autoKey: weekKey,
-          title: 'مدفوعات مستحقة',
-          message: `${unpaid.length} طالب لديهم مستحقات غير مسددة هذا الشهر`,
-          read: false
-        });
-      }
-    }
-
-    // تنظيف الإشعارات القديمة (أقدم من 30 يومًا)
-    const cutoff = Date.now() - 30 * 86400000;
-    const old = Storage.list(Storage.KEYS.notifications, n => n.createdAt < cutoff);
-    old.forEach(n => Storage.removeById(Storage.KEYS.notifications, n.id));
-
-    this.updateBadge();
   },
 
   updateBadge() {
