@@ -1,5 +1,5 @@
-/* مُعلّمي Service Worker - v1.1.2 (Supabase Cloud + Email Auth) */
-const APP_VERSION = 'v1.1.2';
+/* مُعلّمي Service Worker - v1.2.0 (Gemini AI: التحليل الذكي + مولد الامتحانات) */
+const APP_VERSION = 'v1.2.0';
 const CACHE_NAME = `moallemy-${APP_VERSION}`;
 const ASSETS = [
   './',
@@ -7,10 +7,12 @@ const ASSETS = [
   './manifest.json',
   './css/style.css',
   './css/components.css',
+  './css/ai.css',
   './css/animations.css',
   './css/responsive.css',
   './js/vendor/supabase.js',
   './js/supabase-config.js',
+  './js/utils.js',
   './js/storage.js',
   './js/cloud.js',
   './js/auth.js',
@@ -21,6 +23,9 @@ const ASSETS = [
   './js/attendance.js',
   './js/assignments.js',
   './js/exams.js',
+  './js/ai-analysis.js',
+  './js/ai.js',
+  './js/ai-generator.js',
   './js/payments.js',
   './js/reports.js',
   './js/calendar.js',

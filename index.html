@@ -89,6 +89,11 @@
 
   <link
     rel="stylesheet"
+    href="css/ai.css"
+  />
+
+  <link
+    rel="stylesheet"
     href="css/animations.css"
   />
 
@@ -1160,6 +1165,14 @@
   ></script>
 
 
+  <!-- Utils (أدوات مشتركة - مطلوبة لوحدات الذكاء الاصطناعي) -->
+
+  <script
+    src="js/utils.js"
+    defer
+  ></script>
+
+
   <script
     src="js/storage.js"
     defer
@@ -1216,6 +1229,29 @@
 
   <script
     src="js/exams.js"
+    defer
+  ></script>
+
+
+  <!-- ============================================= -->
+  <!-- AI: التحليل الذكي + مولّد الامتحانات -->
+  <!-- الترتيب مهم: utils ← storage ← ai-analysis ← ai ← ai-generator -->
+  <!-- ============================================= -->
+
+  <script
+    src="js/ai-analysis.js"
+    defer
+  ></script>
+
+
+  <script
+    src="js/ai.js"
+    defer
+  ></script>
+
+
+  <script
+    src="js/ai-generator.js"
     defer
   ></script>
 
