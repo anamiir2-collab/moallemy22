@@ -9,6 +9,8 @@ const Exams = {
     const today = new Date().toISOString().slice(0, 10);
     const upcoming = exams.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     const past = exams.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+    // الامتحانات المولدة بالذكاء الاصطناعي — مخزنة منفصلة ولا تلمس الاختبارات العادية
+    const aiExams = Storage.list(Storage.KEYS.aiExams || 'ai_exams');
 
     return `
       <div class="page-header">
@@ -24,9 +26,14 @@ const Exams = {
         </div>
       </div>
 
+      <button class="btn btn-gold btn-block" onclick="AIGenerator.openGenerator()" style="margin-bottom: var(--space-4);">
+        ✨ توليد امتحان بالذكاء الاصطناعي
+      </button>
+
       <div class="tabs" id="exams-tabs">
         <button class="tab active" data-tab="upcoming">القادمة (${upcoming.length})</button>
         <button class="tab" data-tab="past">السابقة (${past.length})</button>
+        <button class="tab" data-tab="ai">الذكاء الاصطناعي (${aiExams.length})</button>
       </div>
 
       <div id="exams-tab-content">
@@ -45,7 +52,15 @@ const Exams = {
         const exams = Storage.list(Storage.KEYS.exams);
         let list = [];
         if (t === 'upcoming') list = exams.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-        else list = exams.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+        else if (t === 'past') list = exams.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
+        else if (t === 'ai') {
+          // تبويب الامتحانات المولدة بالذكاء الاصطناعي (مخزن منفصل)
+          document.getElementById('exams-tab-content').innerHTML = window.AIGenerator
+            ? AIGenerator.renderSavedTab()
+            : UI.emptyState('✨', 'غير متاح', 'لم يتم تحميل وحدة الذكاء الاصطناعي.');
+          if (window.AIGenerator) AIGenerator.bindSavedTab();
+          return;
+        }
         document.getElementById('exams-tab-content').innerHTML = this.renderList(list, 'لا توجد اختبارات', '');
         this.bindListEvents();
       });

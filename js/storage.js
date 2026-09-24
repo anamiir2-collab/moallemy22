@@ -25,6 +25,7 @@ const Storage = (function () {
     curriculum: 'curriculum',
     notifications: 'notifications',
     announcements: 'announcements',
+    aiExams: 'ai_exams',
     settings: 'settings',
     meta: 'meta',
     installDismissed: 'install_dismissed'

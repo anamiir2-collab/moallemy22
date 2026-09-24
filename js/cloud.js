@@ -33,7 +33,8 @@ const Cloud = (function () {
   // مجموعات التخزين المحلي ← جداول Supabase
   // (subjects/stages تُدمج داخل صف settings لعدم وجود جدولين لها)
   // ⚠️ القيم هنا هي **قيم** مفاتيح Storage وليست أسماء خصائصها
-  const LOCAL_ONLY = ['meta', 'install_dismissed', 'curriculum'];
+  // ai_exams: الامتحانات المولدة بالذكاء الاصطناعي — محلية فقط (لا جدول سحابي لها)
+  const LOCAL_ONLY = ['meta', 'install_dismissed', 'curriculum', 'ai_exams'];
 
   // ===== أدوات =====
   function client() {

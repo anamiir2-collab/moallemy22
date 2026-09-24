@@ -3,7 +3,7 @@
    محرك التحليل المحلي (Local Analysis Engine)
    - يعمل بالكامل على بيانات الطالب الفعلية من التخزين
    - ممنوع منعًا باتًا وضع أي API Key في الفرونت
-   - Provider interfaces جاهزة لربط Backend مستقبلًا
+   - Provider interfaces: محلي + سحابي عبر Supabase Edge Function (Gemini)
    ============================================ */
 
 /* ============================================
@@ -20,23 +20,46 @@ const AIProviders = {
     }
   },
   cloud: {
-    name: 'سحابي (غير مهيأ)',
+    name: 'سحابي (Gemini عبر Edge Function)',
     isReady() {
-      // جاهزية Backend مستقبلًا: يُقرأ من إعدادات الخادم فقط - لا مفاتيح في الفرونت
-      const cfg = Storage.get(Storage.KEYS.meta, {});
-      return !!cfg.aiEndpoint;
+      // الجاهزية تتطلب عميل Supabase + جلسة حقيقية (الوضع التجريبي لا يدعم السحابة)
+      // لا يُقرأ أي مفتاح من الفرونت — المفتاح داخل Supabase Secrets حصراً
+      return !!(
+        window.SupabaseConfig &&
+        typeof SupabaseConfig.isReady === 'function' &&
+        SupabaseConfig.isReady() &&
+        window.Storage &&
+        !Storage.isDemoMode()
+      );
+    },
+    /**
+     * استدعاء موحد لـ Edge Function (gemini-ai)
+     * يستخدم جلسة المستخدم الحالية و Access Token تلقائيًا عبر supabase-js
+     * لا يُرسل أي مفتاح Gemini من هنا
+     */
+    invoke(task, payload) {
+      if (!this.isReady()) {
+        return Promise.reject(new Error(AI.cloudUnavailableReason()));
+      }
+      return SupabaseConfig.client.functions
+        .invoke('gemini-ai', { body: { task, payload } })
+        .then(({ data, error }) => {
+          if (error) {
+            const status = error.status || (error.context && error.context.status) || 0;
+            throw new Error(AI.mapEdgeError(status, error.message));
+          }
+          if (!data || data.ok === false) {
+            throw new Error((data && data.error) || 'تعذر تنفيذ طلب الذكاء الاصطناعي');
+          }
+          return data.data;
+        });
     },
     analyze(payload) {
-      const endpoint = Storage.get(Storage.KEYS.meta, {}).aiEndpoint;
-      if (!endpoint) {
-        // Fallback صريح للمحلي - لا يفشل المستخدم أبدًا
-        return AIProviders.local.analyze(payload);
-      }
-      return fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: 'student-analysis', payload })
-      }).then(r => r.json());
+      // توافق مع الواجهة القديمة: يحول استجابة Gemini إلى نص موحد
+      return this.invoke('student-analysis', payload).then((data) => ({
+        text: data.parentReport || data.summary || '',
+        meta: { engine: 'gemini', data }
+      }));
     }
   }
 };
@@ -48,6 +71,95 @@ const AI = {
   activeProvider: 'local',
 
   provider() { return AIProviders[this.activeProvider] || AIProviders.local; },
+
+  /* ============================================
+     Gemini عبر Edge Function — أدوات مساعدة
+     ============================================ */
+
+  // سبب عربي واضح لعدم جاهزية المزود السحابي
+  cloudUnavailableReason() {
+    if (!window.SupabaseConfig || !SupabaseConfig.isReady()) {
+      return 'تعذر الاتصال بالخدمة — تحقق من اتصالك بالإنترنت ثم أعد المحاولة';
+    }
+    if (Storage.isDemoMode()) {
+      return 'الوضع التجريبي لا يدعم الذكاء الاصطناعي — سجّل الدخول بحسابك الحقيقي أولًا';
+    }
+    return 'خدمة الذكاء الاصطناعي غير متاحة حاليًا — حاول لاحقًا';
+  },
+
+  // تحويل أخطاء Edge Function إلى رسائل عربية مفهومة
+  mapEdgeError(status, raw) {
+    const known = {
+      401: 'انتهت صلاحية الجلسة — سجّل الدخول من جديد ثم أعد المحاولة',
+      429: 'محاولات كثيرة — انتظر قليلًا ثم حاول مرة أخرى',
+      500: 'خدمة الذكاء الاصطناعي غير مهيأة على الخادم بعد — تواصل مع المسؤول',
+      502: 'تعذر الاتصال بخدمة الذكاء الاصطناعي حاليًا — جرّب بعد قليل'
+    };
+    if (known[status]) return known[status];
+    if (status >= 500) return 'خطأ في الخادم — جرّب مرة أخرى بعد قليل';
+    return raw || 'تعذر تنفيذ طلب الذكاء الاصطناعي — حاول مرة أخرى';
+  },
+
+  /**
+   * بناء حزمة بيانات الطالب الفعلية لإرسالها إلى Gemini
+   * مبدأ صارم: بيانات مسجلة فقط — بدون هواتف أو بيانات مالية أو طلاب آخرين
+   * ما لا يوجد له بيانات يُرسل فارغًا/صفرًا ليصرّح Gemini بغياب البيانات
+   */
+  buildStudentAnalysisPayload(studentId, periodDays = 0) {
+    const data = AIAnalysis.prepare(studentId, periodDays);
+    if (!data) return null;
+
+    return {
+      student: {
+        name: data.studentProfile.name,
+        className: data.studentProfile.className || '',
+        section: data.studentProfile.section || '',
+        subject: data.studentProfile.subject || '',
+        groupName: data.studentProfile.groupName || '',
+        status: data.studentProfile.status || 'نشط'
+      },
+      grades: data.allGrades.map(g => ({
+        title: g.title || (g.examId ? 'درجة اختبار' : 'درجة'),
+        type: g.type || '',
+        score: g.score,
+        maxGrade: g.maxGrade,
+        percentage: g.pct,
+        date: g.date || null
+      })),
+      gradeTrend: {
+        direction: data.gradeTrend.direction,
+        change: data.gradeTrend.change,
+        confidence: data.gradeTrend.confidence,
+        sampleSize: data.gradeTrend.sample,
+        note: data.gradeTrend.message || null
+      },
+      attendance: data.attStats,
+      assignments: data.assignmentStats,
+      teacherNotes: data.teacherNotes.slice(0, 30).map(n => ({
+        type: n.type || 'ملاحظة',
+        text: n.text || '',
+        date: n.date || null
+      })),
+      goals: data.goals.slice(0, 20).map(g => ({
+        title: g.title || g.text || '',
+        status: g.status || ''
+      })),
+      generatedAt: data.generatedAt
+    };
+  },
+
+  /**
+   * طلب تحليل طالب من Gemini (عبر Edge Function)
+   * يعيد Promise: { ok: true, data, source: 'gemini' } أو يرفض بخطأ عربي
+   */
+  requestStudentAnalysis(studentId, periodDays = 0) {
+    const payload = AI.buildStudentAnalysisPayload(studentId, periodDays);
+    if (!payload) {
+      return Promise.reject(new Error('لم يتم العثور على بيانات هذا الطالب'));
+    }
+    return AIProviders.cloud.invoke('student-analysis', payload)
+      .then(data => ({ ok: true, data, source: 'gemini', payload }));
+  },
 
   /* ============================================
      محرك الاتجاه (Trend Engine)

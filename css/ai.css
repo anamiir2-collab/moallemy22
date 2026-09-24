@@ -1,0 +1,434 @@
+/* ============================================
+   مُعلّمي | ai.css
+   تنسيقات وحدات الذكاء الاصطناعي
+   (مولّد الامتحانات + التحليل الذكي)
+   تستخدم نفس متغيرات التصميم الأساسية بالكامل
+   ============================================ */
+
+/* ===== شاشة التحميل ===== */
+.ai-loading {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.ai-loading h3 {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.ai-loading-sub {
+  margin-top: var(--space-2);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+}
+
+.ai-loading-hint {
+  margin-top: var(--space-2);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+
+.ai-spinner {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto;
+  border-radius: var(--radius-full);
+  border: 4px solid var(--color-gold-soft);
+  border-top-color: var(--color-gold);
+  animation: aiSpin 0.9s linear infinite;
+}
+
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== شاشة الخطأ ===== */
+.ai-error {
+  text-align: center;
+  padding: var(--space-6) var(--space-3);
+}
+
+.ai-error-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-error h3 {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  margin-bottom: var(--space-2);
+}
+
+.ai-error p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+}
+
+/* ===== ملاحظات ===== */
+.ai-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-primary-softer);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+
+.ai-note svg { flex-shrink: 0; color: var(--color-primary-light); }
+
+.ai-note-warn {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+.ai-note-warn svg { color: var(--color-warning); }
+
+/* ===== شرائح الصعوبة ===== */
+.ai-chip-group {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ai-chip {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-surface-3);
+  background: var(--color-surface);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-semibold);
+  font-family: var(--font-base);
+  transition: all var(--transition-fast);
+}
+
+.ai-chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-on-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+/* ===== شبكة أنواع الأسئلة ===== */
+.ai-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.ai-type-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-surface-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ai-type-item:has(input:checked) {
+  border-color: var(--color-primary-light);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.ai-type-item input {
+  accent-color: var(--color-primary);
+  width: 15px;
+  height: 15px;
+}
+
+/* ===== رأس الامتحان ===== */
+.ai-exam-header {
+  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-gold-soft));
+  border: 1px solid var(--color-surface-3);
+}
+
+.ai-exam-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  font-family: var(--font-heading);
+}
+
+.ai-exam-title svg { color: var(--color-gold-dark); flex-shrink: 0; }
+
+.ai-instructions {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ===== بطاقات الأسئلة ===== */
+.ai-q-card {
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+}
+
+.ai-q-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.ai-q-num {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ai-q-type { flex-shrink: 0; }
+.ai-q-marks { flex-shrink: 0; }
+
+.ai-q-text {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+/* ===== الخيارات ===== */
+.ai-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.ai-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-surface-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.ai-option.correct {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+  color: var(--color-success);
+  font-weight: var(--fw-bold);
+}
+
+.ai-option-key {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ai-option.correct .ai-option-key {
+  background: var(--color-success);
+  color: #fff;
+}
+
+.ai-option-text { flex: 1; line-height: 1.6; }
+
+.ai-option-check { flex-shrink: 0; }
+
+/* ===== الإجابات ===== */
+.ai-answer-inline {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-success-soft);
+  border-radius: var(--radius-sm);
+  color: var(--color-success);
+  font-size: var(--font-size-xs);
+}
+
+.ai-answer-block {
+  margin-top: var(--space-3);
+  background: var(--color-surface-2);
+  border: 1px dashed var(--color-primary-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.ai-answer-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+}
+
+.ai-answer-text {
+  padding: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
+/* ===== أزرار النتائج ===== */
+.ai-actions {
+  margin-top: var(--space-5);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ai-actions .btn {
+  min-width: 110px;
+}
+
+/* ===== التحليل الذكي ===== */
+.ai-real-stats { margin-bottom: var(--space-4); }
+
+.ai-real-stats-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.ai-real-stats .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.ai-real-stats .stat-card {
+  padding: var(--space-3);
+}
+
+.ai-analysis-section {
+  margin-bottom: var(--space-3);
+}
+
+.ai-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  font-family: var(--font-heading);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ai-summary {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.9;
+}
+
+.ai-list {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ai-list li {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.8;
+}
+
+/* ===== خطة التحسين ===== */
+.ai-plan-item {
+  padding: var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.ai-plan-title {
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.ai-plan-metric {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  color: var(--color-success);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+/* ===== تقرير ولي الأمر ===== */
+.ai-parent-report {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-surface-3);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 2;
+}
+
+/* ===== الطباعة عبر Ctrl+P (المحتوى داخل المودال) ===== */
+@media print {
+  .ai-loading,
+  .ai-error,
+  .ai-actions,
+  .ai-note {
+    display: none !important;
+  }
+}
+
+/* ===== تبويبات صفحة الاختبارات (لتتسع 3 تبويبات على الموبايل) ===== */
+#exams-tabs .tab {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+}

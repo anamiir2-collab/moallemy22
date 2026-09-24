@@ -408,10 +408,38 @@ const App = {
       { id: 'settings', icon: '⚙️', title: 'الإعدادات', desc: 'الحساب والأمان والنسخ', color: '' }
     ];
 
+    // قسم الذكاء الاصطناعي — إضافة جديدة لا تلمس الأقسام الحالية
+    const aiItems = [
+      { id: 'ai-analysis', icon: '🧠', title: 'التحليل الذكي', desc: 'تحليل أداء الطلاب من بياناتهم المسجلة', color: 'info' },
+      { id: 'ai-exam-gen', icon: '✨', title: 'مولّد الامتحانات', desc: 'إنشاء امتحانات جاهزة في دقيقة', color: 'gold' }
+    ];
+
     return `
       <div class="page-header">
         <h1 class="page-title">المزيد</h1>
         <p class="page-subtitle">جميع أدوات التطبيق</p>
+      </div>
+
+      <div class="section-header" style="margin-bottom: var(--space-3);">
+        <h3 class="section-title">الذكاء الاصطناعي</h3>
+      </div>
+      <div class="list stagger">
+        ${aiItems.map(item => `
+          <div class="list-item clickable" data-nav="${item.id}">
+            <div class="quick-action-icon ${item.color}">${item.icon}</div>
+            <div class="list-item-body">
+              <div class="list-item-title">${item.title}</div>
+              <div class="list-item-subtitle">${item.desc}</div>
+            </div>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section-header" style="margin: var(--space-5) 0 var(--space-3);">
+        <h3 class="section-title">جميع الأدوات</h3>
       </div>
       <div class="list stagger">
         ${items.map(item => `
@@ -432,7 +460,13 @@ const App = {
 
   bindMore() {
     document.querySelectorAll('[data-nav]').forEach(el => {
-      el.addEventListener('click', () => this.navigate(el.dataset.nav));
+      el.addEventListener('click', () => {
+        const nav = el.dataset.nav;
+        // أدوات الذكاء الاصطناعي — نوافذ مباشرة بدل التنقل
+        if (nav === 'ai-analysis') { AIGenerator.openStudentPicker(); return; }
+        if (nav === 'ai-exam-gen') { AIGenerator.openGenerator(); return; }
+        this.navigate(nav);
+      });
     });
   },
 
