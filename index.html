@@ -1235,7 +1235,7 @@
 
   <!-- ============================================= -->
   <!-- AI: التحليل الذكي + مولّد الامتحانات -->
-  <!-- الترتيب مهم: utils ← storage ← ai-analysis ← ai ← ai-generator -->
+  <!-- الترتيب مهم: utils ← storage ← ai-analysis ← ai ← ai-key ← ai-generator -->
   <!-- ============================================= -->
 
   <script
@@ -1246,6 +1246,14 @@
 
   <script
     src="js/ai.js"
+    defer
+  ></script>
+
+
+  <!-- GeminiKey: مفتاح Gemini المحلي + الاتصال المباشر من المتصفح
+       (لمولّد الامتحانات فقط — لا يلمس student-analysis) -->
+  <script
+    src="js/ai-key.js"
     defer
   ></script>
 
