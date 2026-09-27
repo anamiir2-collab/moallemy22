@@ -2,15 +2,24 @@
    مُعلّمي | ai-generator.js
    مولّد الامتحانات + التحليل الذكي (Gemini)
    --------------------------------------------
-   - الاستدعاء عبر Supabase Edge Function بجلسة المستخدم
-   - لا يحتوي هذا الملف على أي مفتاح API نهائيًا
+   - مولّد الامتحانات:
+     * يتصل بـ Gemini مباشرة من المتصفح عبر GeminiKey
+     * المفتاح يُدخله المعلم ويُحفظ في localStorage على جهازه فقط
+     * لا يمر عبر Supabase Edge Function ولا يرسل المفتاح لأي سيرفر
+     * لا يوجد أي مفتاح ثابت داخل هذا الملف إطلاقًا
+   - التحليل الذكي للطلاب:
+     * ما زال يمر عبر Edge Function "gemini-ai" كما هو
+     * لا يستخدم مفتاح Gemini من المتصفح إطلاقًا
    - الامتحانات المولدة تُحفظ محليًا في ai_exams
      ولا تلمس الاختبارات العادية إطلاقًا
-   - التحليل الذكي يعتمد على البيانات المسجلة فقط
    ============================================ */
 
 const AIGenerator = {
+  /* Edge Function — تُستخدم فقط لمهمة student-analysis (لم تتغير) */
   EDGE_FUNCTION: 'gemini-ai',
+
+  /* نموذج Gemini الرسمي — مطلوب المستخدم تحديده */
+  GEMINI_MODEL: 'gemini-2.5-flash',
 
   // ===== حالة مؤقتة للجلسة الحالية =====
   lastExam: null,          // آخر امتحان مولد/معروض
@@ -36,9 +45,113 @@ const AIGenerator = {
   DIFFICULTIES: ['سهل', 'متوسط', 'صعب', 'متدرج'],
 
   /* ============================================
-     فحوصات ما قبل الاستخدام
+     Schema توليد امتحان (نفس بنية Edge Function)
+     يجب أن تتطابق الحقول مع ما يستهلكه normalizeExam و renderQuestions
      ============================================ */
-  precheck() {
+  EXAM_SCHEMA: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      subject: { type: 'string' },
+      grade: { type: 'string' },
+      topic: { type: 'string' },
+      durationMinutes: { type: 'integer' },
+      totalMarks: { type: 'number' },
+      instructions: { type: 'string' },
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: ['mcq', 'truefalse', 'fill', 'essay', 'problem']
+            },
+            text: { type: 'string' },
+            options: { type: 'array', items: { type: 'string' } },
+            answer: { type: 'string' },
+            modelAnswer: { type: 'string' },
+            marks: { type: 'number' }
+          },
+          required: ['type', 'text', 'answer', 'marks']
+        }
+      }
+    },
+    required: [
+      'title', 'subject', 'grade', 'topic',
+      'durationMinutes', 'totalMarks', 'instructions', 'questions'
+    ]
+  },
+
+  /* ============================================
+     بناء البرومبت — نفس نسخة Edge Function لضمان نفس سلوك Gemini
+     ============================================ */
+  buildExamPrompt(p) {
+    const types = {
+      mcq: 'اختيار من متعدد (4 اختيارات: أ، ب، ج، د — إجابة صحيحة واحدة فقط)',
+      truefalse: 'صح أو خطأ (الإجابة كلمة "صح" أو "خطأ" فقط)',
+      fill: 'أكمل (فراغ بإجابة قصيرة واضحة)',
+      essay: 'مقالي (مع إجابة نموذجية قابلة للتصحيح في modelAnswer)',
+      problem: 'مسألة (مع خطوات الحل كاملة في modelAnswer)'
+    };
+
+    const typeLabels = (p.types && p.types.length ? p.types : ['mcq'])
+      .map((t) => types[t] || t)
+      .join('، ');
+
+    const difficultyNote = {
+      'سهل': 'أسئلة مباشرة من جوهر الدرس تناسب جميع الطلاب.',
+      'متوسط': 'مزيج متوازن: أغلب الأسئلة متوسطة مع بعض الأسئلة السهلة.',
+      'صعب': 'أسئلة تفكير وتطبيق لكنها داخل حدود الدرس المحدد.',
+      'متدرج': 'ترتيب تصاعدي: ابدأ بالأسئلة السهلة وانتهِ بالأصعب تدريجيًا.'
+    };
+
+    return `أنت مختص خبير في إعداد الامتحانات المدرسية في مصر وفق المنهج الرسمي.
+
+أنشئ امتحانًا وفق المواصفات التالية بالضبط:
+
+- المادة: ${p.subject}
+- الصف الدراسي: ${p.grade}
+- الدرس / الوحدة: ${p.topic}
+- عدد الأسئلة: ${p.questionCount} سؤال بالضبط (لا تزيد ولا تنقص)
+- الدرجة النهائية: ${p.totalMarks} درجة (مجموع درجات الأسئلة يجب أن يساوي هذا الرقم بالضبط)
+- زمن الامتحان: ${p.durationMinutes} دقيقة
+- مستوى الصعوبة: ${p.difficulty} — ${difficultyNote[p.difficulty] || ''}
+- أنواع الأسئلة المطلوبة فقط: ${typeLabels}
+${p.extraInstructions ? `- تعليمات إضافية من المدرس (التزم بها): ${p.extraInstructions}` : ''}
+
+قواعد إلزامية لا تخالفها:
+1. التزم حصرًا بالمادة والصف والدرس/الوحدة المحددين — ممنوع اختراع محتوى من دروس أخرى أو منهج غير محدد.
+2. لا تكرر أي سؤال ولا تكرر فكرة سؤال بصياغتين متشابهتين.
+3. مجموع حقل marks لجميع الأسئلة = ${p.totalMarks} بالضبط. وزّع الدرجات بمنطق (الاختيار من متعدد وصح-خطأ درجات صغيرة، المقالي والمسائل درجات أكبر).
+4. سؤال "اختيار من متعدد": options تحتوي 4 اختيارات بالضبط، وإجابة صحيحة واحدة فقط في answer (اكتب نص الإجابة الصحيحة كما هو في أحد الاختيارات حرفيًا).
+5. سؤال "صح أو خطأ": answer إما "صح" أو "خطأ"، ولا تضع options.
+6. سؤال "أكمل": أجب بإجابة قصيرة محددة في answer ولا تضع options.
+7. سؤال "مقالي" أو "مسألة": اكتب الإجابة النموذجية الكاملة القابلة للتصحيح في modelAnswer (وللمسألة: خطوات الحل والنتيجة النهائية).
+8. عبارات الأسئلة بالعربية الفصحى السليمة الواضحة، مناسبة لمرحلة ${p.grade}.
+9. لا ترقّم الأسئلة داخل نص السؤال — الترقيم يُولَّد تلقائيًا من التطبيق.
+10. أعِد JSON فقط دون أي شرح إضافي ولا أكواد Markdown.
+11. اكتب في instructions تعليمات امتحان قصيرة مناسبة (زمن الامتحان، الإجابة على جميع الأسئلة، إلخ).
+12. التزم بعدد الأسئلة المطلوب بالضبط دون زيادة أو نقص.`;
+  },
+
+  /* ============================================
+     فحوصات ما قبل الاستخدام
+     - مولّد الامتحانات: لا يتطلب Supabase ولا تسجيل الدخول
+       (الاتصال بـ Gemini يتم مباشرة من المتصفح بمفتاح المستخدم)
+     - تحليل الطالب: يتطلب Supabase + جلسة (لم يتغير — يمر عبر Edge Function)
+     ============================================ */
+  precheckForExam() {
+    if (!window.GeminiKey || !GeminiKey.hasKey()) {
+      return {
+        ok: false,
+        msg: 'لم يُعثر على مفتاح Gemini — أضف المفتاح من قسم "إعداد الذكاء الاصطناعي" بالأعلى'
+      };
+    }
+    return { ok: true };
+  },
+
+  precheckForAnalysis() {
     if (!window.SupabaseConfig || !SupabaseConfig.isReady()) {
       return { ok: false, msg: 'تعذر الاتصال بالخدمة — تحقق من اتصالك بالإنترنت ثم أعد المحاولة' };
     }
@@ -48,18 +161,59 @@ const AIGenerator = {
     return { ok: true };
   },
 
-  // استدعاء موحد للـ Edge Function (يرسل Access Token تلقائيًا)
+  /* واجهة قديمة — تُستخدم في أمكنة لم تُحدّد بعد، نُوجّهها افتراضيًا لفحص الامتحان */
+  precheck() { return this.precheckForExam(); },
+
+  /* استدعاء موحّد:
+     - task === 'generate-exam'  → GeminiKey مباشرة من المتصفح
+     - task === 'student-analysis' → Edge Function (لم تتغير) */
   callAI(task, payload) {
+    if (task === 'generate-exam') {
+      return this.callGeminiForExam(payload);
+    }
     return AIProviders.cloud.invoke(task, payload);
+  },
+
+  /* ============================================
+     استدعاء Gemini مباشرة من المتصفح لمولّد الامتحانات
+     - لا يرسل أي بيانات إلى Supabase
+     - يبني البرومبت بنفس منطق Edge Function لضمان نفس بنية JSON
+     ============================================ */
+  async callGeminiForExam(options) {
+    if (!window.GeminiKey) {
+      throw new Error('وحدة المفتاح غير متاحة — حدّث الصفحة ثم أعد المحاولة');
+    }
+    if (!GeminiKey.hasKey()) {
+      const err = new Error(
+        'لم يُعثر على مفتاح Gemini — أضف المفتاح من قسم "إعداد الذكاء الاصطناعي" بالأعلى'
+      );
+      err.code = 'NO_KEY';
+      throw err;
+    }
+
+    const prompt = this.buildExamPrompt(options);
+    const text = await GeminiKey.callGemini(prompt, this.EXAM_SCHEMA, {
+      maxTokens: 32768
+    });
+
+    const exam = GeminiKey.parseJsonSafe(text);
+    if (!exam || !Array.isArray(exam.questions) || exam.questions.length === 0) {
+      const err = new Error(
+        'استجابة غير صالحة من Gemini — لم يتمكن التطبيق من قراءة الامتحان. جرّب إعادة التوليد'
+      );
+      err.code = 'BAD_JSON';
+      throw err;
+    }
+    return exam;
   },
 
   /* ============================================
      1) مولّد الامتحانات — النموذج
      ============================================ */
   openGenerator() {
-    const pre = this.precheck();
-    if (!pre.ok) { UI.toast(pre.msg, 'warning'); return; }
-
+    // لم يعد هناك حاجة لفحص Supabase لتوليد الامتحان — الاتصال بـ Gemini يتم
+    // مباشرة من المتصفح بمفتاح المستخدم المحفوظ محليًا. يبقى الفحص محصورًا
+    // في زر "توليد الامتحان" نفسه (تأكد وجود المفتاح).
     const subjects = Storage.get(Storage.KEYS.subjects, []);
     const teacher = (typeof Auth !== 'undefined' && Auth.getTeacher()) || {};
     const groups = Storage.list(Storage.KEYS.groups);
@@ -70,6 +224,8 @@ const AIGenerator = {
       size: 'large',
       body: `
         <form id="ai-exam-form">
+          ${this.renderKeyPanel()}
+
           <div class="field-row">
             <div class="field">
               <label>المادة <span class="required">*</span></label>
@@ -137,7 +293,7 @@ const AIGenerator = {
             <textarea name="extraInstructions" rows="2" placeholder="مثال: ركّز على المسائل التطبيقية، واجعل السؤال الأخير تفكيرًا عالي المستوى"></textarea>
           </div>
 
-          <p class="ai-note">${Icons.get('shield', 13)} يُرسل الطلب عبر خادم التطبيق الآمن باستخدام جلستك — لا توجد أي مفاتيح ذكاء اصطناعي داخل التطبيق.</p>
+          <p class="ai-note">${Icons.get('shield', 13)} يتصل المتصفح مباشرة بـ Gemini بمفتاحك المحفوظ محليًا — لا يمر الطلب عبر Supabase ولا يُرفع المفتاح لأي سيرفر.</p>
 
           <div class="action-row" style="margin-top: var(--space-4);">
             <button type="button" class="btn btn-secondary" onclick="UI.closeModal()" style="flex:1">إلغاء</button>
@@ -146,6 +302,9 @@ const AIGenerator = {
         </form>
       `
     });
+
+    // ربط أزرار قسم "إعداد الذكاء الاصطناعي"
+    this.bindKeyPanel();
 
     // شرائح الصعوبة
     const diffGroup = document.getElementById('ai-difficulty-group');
@@ -161,6 +320,16 @@ const AIGenerator = {
       const fd = new FormData(e.target);
       const types = fd.getAll('qtype');
       if (!types.length) { UI.toast('اختر نوع سؤال واحد على الأقل', 'warning'); return; }
+
+      // فحص المفتاح قبل أي شيء
+      const pre = this.precheckForExam();
+      if (!pre.ok) {
+        UI.toast(pre.msg, 'warning');
+        // حاول تركيز حقل المفتاح إن وُجد
+        const keyInput = document.getElementById('ai-gemini-key-input');
+        if (keyInput) keyInput.focus();
+        return;
+      }
 
       const options = {
         subject: String(fd.get('subject') || '').trim(),
@@ -182,6 +351,186 @@ const AIGenerator = {
 
       this.generateExam(options);
     });
+  },
+
+  /* ============================================
+     1.5) واجهة إعداد الذكاء الاصطناعي — قسم المفتاح
+     - الحالة: متصل / غير مُضاف
+     - حقل إدخال المفتاح + أزرار: حفظ / مسح / اختبار الاتصال
+     - لا يُعرض المفتاح كاملًا أبدًا (مقنّع)
+     - تنبيه صريح أن المفتاح محلي فقط
+     ============================================ */
+  renderKeyPanel() {
+    const hasKey = !!(window.GeminiKey && GeminiKey.hasKey());
+    const statusCls = hasKey ? 'ai-key-status-connected' : 'ai-key-status-empty';
+    const statusText = hasKey ? 'متصل' : 'غير مُضاف';
+    const masked = hasKey ? GeminiKey.maskedKey() : '';
+
+    return `
+      <div class="ai-key-panel" id="ai-key-panel">
+        <div class="ai-key-panel-head">
+          <div class="ai-key-panel-title">${Icons.get('lock', 18)} إعداد الذكاء الاصطناعي</div>
+          <span class="ai-key-status ${statusCls}" id="ai-key-status">${statusText}</span>
+        </div>
+
+        <div class="ai-key-panel-body">
+          <div class="ai-key-row" id="ai-key-row-${hasKey ? 'masked' : 'input'}">
+            ${hasKey ? `
+              <div class="ai-key-masked" id="ai-key-masked">
+                <span class="ai-key-masked-label">المفتاح المحفوظ:</span>
+                <span class="ai-key-masked-value">${esc(masked)}</span>
+              </div>
+            ` : `
+              <input
+                type="password"
+                id="ai-gemini-key-input"
+                class="ai-key-input"
+                placeholder="ألصق مفتاح Gemini API هنا"
+                autocomplete="off"
+                spellcheck="false"
+                autocapitalize="off"
+              >
+            `}
+          </div>
+
+          <div class="ai-key-actions">
+            ${hasKey ? `
+              <button type="button" class="btn btn-outline ai-key-btn" id="ai-key-test">${Icons.get('refresh', 14)} اختبار الاتصال</button>
+              <button type="button" class="btn btn-outline ai-key-btn" id="ai-key-change">${Icons.get('edit', 14)} تغيير المفتاح</button>
+              <button type="button" class="btn btn-danger ai-key-btn" id="ai-key-clear">${Icons.get('trash', 14)} مسح المفتاح</button>
+            ` : `
+              <button type="button" class="btn btn-gold ai-key-btn" id="ai-key-save">${Icons.get('lock', 14)} حفظ المفتاح</button>
+              <button type="button" class="btn btn-outline ai-key-btn" id="ai-key-test" disabled>${Icons.get('refresh', 14)} اختبار الاتصال</button>
+            `}
+          </div>
+
+          <div class="ai-key-msg" id="ai-key-msg" role="status" aria-live="polite"></div>
+
+          <p class="ai-key-warning">${Icons.get('info', 13)} مفتاح Gemini يُحفظ على هذا الجهاز فقط ولا يتم رفعه إلى حسابك. يمكن لأي شخص يستخدم هذا الجهاز أو يفتح أدوات المطور أن يصل إليه — لا تُدخله على جهاز مشترك.</p>
+
+          <p class="ai-key-help">للحصول على مفتاح Gemini مجاني: افتح <b>Google AI Studio</b> (aistudio.google.com) ثم اختر <b>Get API key</b>.</p>
+        </div>
+      </div>
+    `;
+  },
+
+  /* إعادة تصيير القسم فقط (دون إعادة فتح المودال) */
+  refreshKeyPanel() {
+    const panel = document.getElementById('ai-key-panel');
+    if (!panel) return;
+    panel.outerHTML = this.renderKeyPanel();
+    this.bindKeyPanel();
+  },
+
+  /* ربط أزرار القسم */
+  bindKeyPanel() {
+    const saveBtn = document.getElementById('ai-key-save');
+    const clearBtn = document.getElementById('ai-key-clear');
+    const testBtn = document.getElementById('ai-key-test');
+    const changeBtn = document.getElementById('ai-key-change');
+    const input = document.getElementById('ai-gemini-key-input');
+
+    if (saveBtn && input) {
+      saveBtn.addEventListener('click', () => this.onSaveKey(input));
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.onSaveKey(input);
+        }
+      });
+      // تفعيل/تعطيل زر الحفظ حسب المحتوى
+      const toggleSave = () => {
+        saveBtn.disabled = !(input.value && input.value.trim());
+      };
+      input.addEventListener('input', toggleSave);
+      toggleSave();
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => this.onClearKey());
+    }
+
+    if (testBtn) {
+      testBtn.addEventListener('click', () => this.onTestKey());
+    }
+
+    if (changeBtn) {
+      changeBtn.addEventListener('click', () => {
+        // نُفرغ المفتاح من localStorage ثم نعيد التصيير لإظهار حقل الإدخال
+        // ملاحظة: لا نطلب تأكيدًا ثانيًا — زر التغيير غرضه الإدخال من جديد
+        if (window.GeminiKey) GeminiKey.clearKey();
+        this.refreshKeyPanel();
+        setTimeout(() => {
+          const newInput = document.getElementById('ai-gemini-key-input');
+          if (newInput) newInput.focus();
+        }, 50);
+      });
+    }
+  },
+
+  setKeyMsg(text, type) {
+    const el = document.getElementById('ai-key-msg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'ai-key-msg' + (type ? ' ai-key-msg-' + type : '');
+  },
+
+  setKeyTesting(flag) {
+    const btn = document.getElementById('ai-key-test');
+    if (!btn) return;
+    btn.disabled = !!flag;
+    btn.dataset.original = btn.dataset.original || btn.innerHTML;
+    btn.innerHTML = flag
+      ? (Icons.get('refresh', 14) + ' جاري الاختبار...')
+      : btn.dataset.original;
+  },
+
+  onSaveKey(input) {
+    const val = (input && input.value) || '';
+    if (!val.trim()) {
+      this.setKeyMsg('الصق المفتاح أولًا — الحقل فارغ', 'error');
+      input && input.focus();
+      return;
+    }
+    try {
+      GeminiKey.saveKey(val);
+      input.value = '';
+      this.refreshKeyPanel();
+      this.setKeyMsg('تم حفظ المفتاح محليًا على هذا الجهاز', 'success');
+    } catch (e) {
+      this.setKeyMsg(e.message || 'تعذر حفظ المفتاح', 'error');
+    }
+  },
+
+  onClearKey() {
+    if (!window.GeminiKey) return;
+    UI.confirm(
+      'سيتم حذف مفتاح Gemini من هذا الجهاز نهائيًا. يمكن إضافته مجددًا في أي وقت. متابعة؟',
+      () => {
+        GeminiKey.clearKey();
+        this.refreshKeyPanel();
+        this.setKeyMsg('تم مسح المفتاح من هذا الجهاز', 'success');
+      },
+      { title: 'مسح مفتاح Gemini', confirmText: 'مسح المفتاح' }
+    );
+  },
+
+  async onTestKey() {
+    if (!window.GeminiKey) return;
+    if (!GeminiKey.hasKey()) {
+      this.setKeyMsg('لا يوجد مفتاح محفوظ — أضف المفتاح أولًا ثم اضغط "حفظ المفتاح"', 'error');
+      return;
+    }
+    this.setKeyMsg('جاري اختبار الاتصال بـ Gemini...', 'info');
+    this.setKeyTesting(true);
+    try {
+      const res = await GeminiKey.testConnection();
+      this.setKeyMsg(res.msg, res.ok ? 'success' : 'error');
+    } catch (e) {
+      this.setKeyMsg(e.message || 'تعذر اختبار الاتصال', 'error');
+    } finally {
+      this.setKeyTesting(false);
+    }
   },
 
   // خيارات الصف: صفوف الطلاب الفعلية أولًا ثم مستويات المراحل
@@ -211,16 +560,16 @@ const AIGenerator = {
     this.lastExamSavedId = null;
     this.lastOptions = options;
 
-    // شاشة تحميل واضحة
+    // شاشة تحميل واضحة بالعربية
     const body = document.querySelector('#modal-content .modal-body');
     if (body) {
       body.innerHTML = `
         <div class="ai-loading">
           <div class="ai-spinner"></div>
-          <h3>جاري إعداد الامتحان...</h3>
+          <h3>جاري إعداد الامتحان بالذكاء الاصطناعي...</h3>
           <p class="ai-loading-sub">${esc(options.subject)} • ${esc(options.topic)}</p>
           <p class="ai-loading-hint">${options.questionCount} سؤال • ${options.totalMarks} درجة • ${esc(options.difficulty)}</p>
-          <p class="ai-loading-hint">قد يستغرق التوليد حتى دقيقة للامتحانات الطويلة — لا تغلق النافذة</p>
+          <p class="ai-loading-hint">يتصل المتصفح مباشرة بـ Gemini — قد يستغرق التوليد حتى دقيقة للامتحانات الطويلة. لا تغلق النافذة.</p>
         </div>
       `;
     }
@@ -229,13 +578,40 @@ const AIGenerator = {
       const raw = await this.callAI('generate-exam', options);
       const exam = this.normalizeExam(raw, options);
       if (!exam.questions.length) {
-        throw new Error('جاءت استجابة غير صالحة — اضغط "إعادة التوليد"');
+        throw new Error('لم يصل أي سؤال صالح من Gemini — اضغط "إعادة التوليد" أو عدّل تعليماتك');
       }
       this.lastExam = exam;
       this.renderExamResult(exam, { saved: false });
     } catch (err) {
-      this.renderExamError(err.message || 'حدث خطأ غير متوقع', options);
+      // لا نُظهر النص الخام للمفتاح أو رسائل JavaScript غير المعربة أبدًا
+      const safe = this.toSafeArabicError(err);
+      this.renderExamError(safe, options);
     }
+  },
+
+  /* تحويل أي خطأ إلى رسالة عربية واضحة — تمنع ظهور
+     undefined / null / Failed / Error: ... */
+  toSafeArabicError(err) {
+    if (!err) return 'حدث خطأ غير متوقع — حاول مرة أخرى';
+    let msg = '';
+    if (err && typeof err.message === 'string' && err.message.trim()) {
+      msg = err.message.trim();
+    } else if (typeof err === 'string') {
+      msg = err.trim();
+    }
+    if (!msg) return 'حدث خطأ غير متوقع — حاول مرة أخرى';
+
+    // حظر الكلمات الخام الممنوعة
+    const raw = String(msg);
+    if (/^(undefined|null|failed|networkerror|error)$/i.test(raw)) {
+      return 'حدث خطأ غير متوقع أثناء الاتصال بـ Gemini — حاول مرة أخرى';
+    }
+    // إخفاء أي جزء يحتوي على المفتاح صراحةً (احتياط أمان)
+    const key = (window.GeminiKey && GeminiKey.getKey()) || '';
+    if (key && raw.includes(key)) {
+      return 'حدث خطأ أثناء الاتصال بـ Gemini — تحقق من المفتاح وحاول مرة أخرى';
+    }
+    return raw;
   },
 
   // توحيد شكل الامتحان + فرض قواعد الجودة
@@ -749,7 +1125,9 @@ const AIGenerator = {
     const student = Storage.find(Storage.KEYS.students, studentId);
     if (!student) { UI.toast('لم يتم العثور على الطالب', 'warning'); return; }
 
-    const pre = this.precheck();
+    // تحليل الطالب ما زال يمر عبر Edge Function (gemini-ai)
+    // — لا يستخدم مفتاح Gemini من المتصفح إطلاقًا، ويتطلب Supabase + جلسة.
+    const pre = this.precheckForAnalysis();
 
     UI.modal({
       title: `التحليل الذكي — ${esc(student.name)}`,
@@ -772,7 +1150,10 @@ const AIGenerator = {
       const res = await AI.requestStudentAnalysis(studentId);
       this.renderAnalysis(studentId, res.data, 'gemini');
     } catch (err) {
-      this.renderAnalysisError(err.message || 'تعذر إتمام التحليل', studentId);
+      const safe = (err && err.message && err.message.trim())
+        ? err.message.trim()
+        : 'تعذر إتمام التحليل — حاول مرة أخرى';
+      this.renderAnalysisError(safe, studentId);
     }
   },
 
