@@ -408,10 +408,10 @@ const App = {
       { id: 'settings', icon: '⚙️', title: 'الإعدادات', desc: 'الحساب والأمان والنسخ', color: '' }
     ];
 
-    // قسم الذكاء الاصطناعي — التحليل الذكي فقط
-    // (مولّد الامتحانات أُزيل بناءً على طلب المستخدم)
+    // قسم الذكاء الاصطناعي — إضافة جديدة لا تلمس الأقسام الحالية
     const aiItems = [
-      { id: 'ai-analysis', icon: '🧠', title: 'التحليل الذكي', desc: 'تحليل أداء الطلاب من بياناتهم المسجلة', color: 'info' }
+      { id: 'ai-analysis', icon: '🧠', title: 'التحليل الذكي', desc: 'تحليل أداء الطلاب من بياناتهم المسجلة', color: 'info' },
+      { id: 'ai-exam-gen', icon: '✨', title: 'مولّد الامتحانات', desc: 'إنشاء امتحانات جاهزة في دقيقة', color: 'gold' }
     ];
 
     return `
@@ -462,8 +462,9 @@ const App = {
     document.querySelectorAll('[data-nav]').forEach(el => {
       el.addEventListener('click', () => {
         const nav = el.dataset.nav;
-        // التحليل الذكي — نافذة مباشرة بدل التنقل
+        // أدوات الذكاء الاصطناعي — نوافذ مباشرة بدل التنقل
         if (nav === 'ai-analysis') { AIGenerator.openStudentPicker(); return; }
+        if (nav === 'ai-exam-gen') { AIGenerator.openGenerator(); return; }
         this.navigate(nav);
       });
     });
