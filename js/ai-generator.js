@@ -2,16 +2,18 @@
    مُعلّمي | ai-generator.js
    مولّد الامتحانات + التحليل الذكي (CodeCraft AI)
    --------------------------------------------
-   - الاستدعاء عبر Supabase Edge Function بجلسة المستخدم
-   - لا يحتوي هذا الملف على أي مفتاح API نهائيًا
+   - الاستدعاء مباشر إلى CodeCraft API من المتصفح
+     (OpenAI-compatible: /v1/chat/completions)
+   - لا يستخدم Supabase Edge Function للذكاء الاصطناعي
+   - لا يتطلب جلسة Supabase لإنشاء الامتحانات أو التحليل
    - الامتحانات المولدة تُحفظ محليًا في ai_exams
      ولا تلمس الاختبارات العادية إطلاقًا
    - التحليل الذكي يعتمد على البيانات المسجلة فقط
-   - اسم Edge Function محفوظ كـ gemini-ai لأسباب التوافق
    ============================================ */
 
 const AIGenerator = {
-  EDGE_FUNCTION: 'gemini-ai',
+  // (قديم) EDGE_FUNCTION: 'gemini-ai' — تم إلغاء استخدام Supabase Edge Function
+  // الآن الذكاء الاصطناعي يُستدعى مباشرة من المتصفح إلى CodeCraft API عبر AIProviders.cloud.invoke
 
   // ===== حالة مؤقتة للجلسة الحالية =====
   lastExam: null,          // آخر امتحان مولد/معروض
@@ -40,16 +42,17 @@ const AIGenerator = {
      فحوصات ما قبل الاستخدام
      ============================================ */
   precheck() {
-    if (!window.SupabaseConfig || !SupabaseConfig.isReady()) {
-      return { ok: false, msg: 'تعذر الاتصال بالخدمة — تحقق من اتصالك بالإنترنت ثم أعد المحاولة' };
+    // لا نحتاج Supabase للذكاء الاصطناعي — الاستدعاء مباشر إلى CodeCraft API
+    if (!navigator.onLine) {
+      return { ok: false, msg: 'تعذر الاتصال بالإنترنت — تحقق من اتصالك ثم أعد المحاولة' };
     }
-    if (Storage.isDemoMode()) {
+    if (typeof Storage !== 'undefined' && typeof Storage.isDemoMode === 'function' && Storage.isDemoMode()) {
       return { ok: false, msg: 'الوضع التجريبي لا يدعم الذكاء الاصطناعي — سجّل الدخول بحسابك الحقيقي أولًا' };
     }
     return { ok: true };
   },
 
-  // استدعاء موحد للـ Edge Function (يرسل Access Token تلقائيًا)
+  // استدعاء موحد لمزود CodeCraft (مباشر من المتصفح)
   callAI(task, payload) {
     return AIProviders.cloud.invoke(task, payload);
   },

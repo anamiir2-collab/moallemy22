@@ -1,10 +1,52 @@
 /* ============================================
    مُعلّمي | ai.js
-   محرك التحليل المحلي (Local Analysis Engine)
+   محرك التحليل المحلي + مزود CodeCraft AI السحابي
    - يعمل بالكامل على بيانات الطالب الفعلية من التخزين
-   - ممنوع منعًا باتًا وضع أي API Key في الفرونت
-   - Provider interfaces: محلي + سحابي عبر Supabase Edge Function (CodeCraft)
+   - المزود السحابي يستدعي CodeCraft API مباشرة من المتصفح
+     (OpenAI-compatible: https://www.codecraftapi.com/v1/chat/completions)
+   - المزود المحلي يعمل Offline دون أي اتصال بالشبكة
    ============================================ */
+
+/* ============================================
+   0) إعدادات CodeCraft API (OpenAI-compatible)
+   ملاحظة: المفتاح موضوع داخل هذا الملف بناءً على طلب مالك المشروع.
+   تحذير: هذا يكشف المفتاح لأي مستخدم يفتح أدوات المتصفح — راجع README.md.
+   ============================================ */
+const CODECRAFT_API_KEY = 'cc_TUG5geOvMmIyHr7HBEpyfa0DNTqRkf4oGSgor7xeENeNVmuP';
+const CODECRAFT_ENDPOINT = 'https://www.codecraftapi.com/v1/chat/completions';
+const CODECRAFT_MODEL = 'claude-opus-4.8';
+const CODECRAFT_MAX_TOKENS_EXAM = 32768;
+const CODECRAFT_MAX_TOKENS_ANALYSIS = 16384;
+
+// تحويل أخطاء HTTP من CodeCraft إلى رسائل عربية واضحة
+function mapCodeCraftHttpError(status, rawText) {
+  if (status === 401) return 'مفتاح خدمة الذكاء الاصطناعي غير صالح أو منتهي';
+  if (status === 402) return 'رصيد خدمة الذكاء الاصطناعي غير كافٍ';
+  if (status === 429) return 'تم تجاوز حد الاستخدام، حاول مرة أخرى لاحقًا';
+  if (status === 500 || status === 502 || status === 503) {
+    return 'تعذر الاتصال بخدمة الذكاء الاصطناعي حاليًا — حاول مرة أخرى بعد قليل';
+  }
+  if (status >= 500) return 'خطأ في الخادم — جرّب مرة أخرى بعد قليل';
+  return (rawText || 'تعذر تنفيذ طلب الذكاء الاصطناعي — حاول مرة أخرى').slice(0, 200);
+}
+
+// استخراج JSON من نص الاستجابة (مع تحمل أي غلاف بسيط)
+function parseJsonSafe(text) {
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end > start) {
+      try {
+        return JSON.parse(text.slice(start, end + 1));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+}
 
 /* ============================================
    1) واجهات المزودين (Provider Interfaces)
@@ -22,40 +64,78 @@ const AIProviders = {
   cloud: {
     name: 'سحابي (CodeCraft AI)',
     isReady() {
-      // الجاهزية تتطلب عميل Supabase + جلسة حقيقية (الوضع التجريبي لا يدعم السحابة)
-      // لا يُقرأ أي مفتاح من الفرونت — المفتاح داخل Supabase Secrets حصراً
-      return !!(
-        window.SupabaseConfig &&
-        typeof SupabaseConfig.isReady === 'function' &&
-        SupabaseConfig.isReady() &&
-        window.Storage &&
-        !Storage.isDemoMode()
-      );
+      // لا نحتاج Supabase لاستدعاء الذكاء الاصطناعي — الاستدعاء مباشر إلى CodeCraft
+      if (!navigator.onLine) return false;
+      if (window.Storage && typeof Storage.isDemoMode === 'function' && Storage.isDemoMode()) return false;
+      return true;
     },
     /**
-     * استدعاء موحد لـ Edge Function (gemini-ai)
-     * يستخدم جلسة المستخدم الحالية و Access Token تلقائيًا عبر supabase-js
-     * لا يُرسل أي مفتاح CodeCraft من هنا — المفتاح داخل Supabase Secrets حصراً
+     * استدعاء مباشر إلى CodeCraft API (OpenAI-compatible)
+     * يقوم ببناء الـ Prompt محليًا ثم يرسل POST إلى /v1/chat/completions
+     * يعيد Promise بالـ data المُ解析ة (JSON) أو يرفض برسالة عربية
      */
     invoke(task, payload) {
       if (!this.isReady()) {
         return Promise.reject(new Error(AI.cloudUnavailableReason()));
       }
-      return SupabaseConfig.client.functions
-        .invoke('gemini-ai', { body: { task, payload } })
-        .then(({ data, error }) => {
-          if (error) {
-            const status = error.status || (error.context && error.context.status) || 0;
-            throw new Error(AI.mapEdgeError(status, error.message));
+
+      let prompt = '';
+      let maxTokens = CODECRAFT_MAX_TOKENS_EXAM;
+
+      if (task === 'generate-exam') {
+        try {
+          prompt = AI.buildExamPrompt(payload);
+        } catch (e) {
+          return Promise.reject(new Error('بيانات الامتحان غير صالحة: ' + e.message));
+        }
+      } else if (task === 'student-analysis') {
+        prompt = AI.buildAnalysisPrompt(payload);
+        maxTokens = CODECRAFT_MAX_TOKENS_ANALYSIS;
+      } else {
+        return Promise.reject(new Error('مهمة غير معروفة: ' + task));
+      }
+
+      return fetch(CODECRAFT_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + CODECRAFT_API_KEY,
+        },
+        body: JSON.stringify({
+          model: CODECRAFT_MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.75,
+          max_tokens: maxTokens,
+          response_format: { type: 'json_object' },
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            throw new Error(mapCodeCraftHttpError(res.status, errText));
           }
-          if (!data || data.ok === false) {
-            throw new Error((data && data.error) || 'تعذر تنفيذ طلب الذكاء الاصطناعي');
+          return res.json();
+        })
+        .then((data) => {
+          const text = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          if (!text || typeof text !== 'string' || !text.trim()) {
+            throw new Error('استجابة فارغة من خدمة الذكاء الاصطناعي — جرّب مرة أخرى');
           }
-          return data.data;
+          const parsed = parseJsonSafe(text.trim());
+          if (!parsed) {
+            throw new Error('تعذر قراءة استجابة الذكاء الاصطناعي كـ JSON صالح — جرّب إعادة المحاولة');
+          }
+          return parsed;
+        })
+        .catch((err) => {
+          // أعد رمي أخطاء رسائلنا العربية كما هي، ولفّ أي خطأ شبكة آخر
+          if (err && err.message && err.message.length < 250) {
+            throw err;
+          }
+          throw new Error('تعذر الاتصال بخدمة الذكاء الاصطناعي — تحقق من الإنترنت ثم أعد المحاولة');
         });
     },
     analyze(payload) {
-      // توافق مع الواجهة القديمة: يحول استجابة CodeCraft إلى نص موحد
       return this.invoke('student-analysis', payload).then((data) => ({
         text: data.parentReport || data.summary || '',
         meta: { engine: 'codecraft', data }
@@ -73,31 +153,135 @@ const AI = {
   provider() { return AIProviders[this.activeProvider] || AIProviders.local; },
 
   /* ============================================
-     CodeCraft عبر Edge Function — أدوات مساعدة
+     CodeCraft API — أدوات مساعدة
      ============================================ */
 
   // سبب عربي واضح لعدم جاهزية المزود السحابي
   cloudUnavailableReason() {
-    if (!window.SupabaseConfig || !SupabaseConfig.isReady()) {
-      return 'تعذر الاتصال بالخدمة — تحقق من اتصالك بالإنترنت ثم أعد المحاولة';
+    if (!navigator.onLine) {
+      return 'تعذر الاتصال بالإنترنت — تحقق من اتصالك ثم أعد المحاولة';
     }
-    if (Storage.isDemoMode()) {
+    if (window.Storage && typeof Storage.isDemoMode === 'function' && Storage.isDemoMode()) {
       return 'الوضع التجريبي لا يدعم الذكاء الاصطناعي — سجّل الدخول بحسابك الحقيقي أولًا';
     }
     return 'خدمة الذكاء الاصطناعي غير متاحة حاليًا — حاول لاحقًا';
   },
 
-  // تحويل أخطاء Edge Function إلى رسائل عربية مفهومة
-  mapEdgeError(status, raw) {
-    const known = {
-      401: 'انتهت صلاحية الجلسة — سجّل الدخول من جديد ثم أعد المحاولة',
-      429: 'محاولات كثيرة — انتظر قليلًا ثم حاول مرة أخرى',
-      500: 'خدمة الذكاء الاصطناعي غير مهيأة على الخادم بعد — تواصل مع المسؤول',
-      502: 'تعذر الاتصال بخدمة الذكاء الاصطناعي حاليًا — جرّب بعد قليل'
+  /* ============================================
+     بناء Prompt توليد الامتحان
+     (نفس منطق الـ Edge Function السابق — الحقول والقواعد كما هي)
+     ============================================ */
+  buildExamPrompt(p) {
+    const types = {
+      mcq: 'اختيار من متعدد (4 اختيارات: أ، ب، ج، د — إجابة صحيحة واحدة فقط)',
+      truefalse: 'صح أو خطأ (الإجابة كلمة "صح" أو "خطأ" فقط)',
+      fill: 'أكمل (فراغ بإجابة قصيرة واضحة)',
+      essay: 'مقالي (مع إجابة نموذجية قابلة للتصحيح في modelAnswer)',
+      problem: 'مسألة (مع خطوات الحل كاملة في modelAnswer)',
     };
-    if (known[status]) return known[status];
-    if (status >= 500) return 'خطأ في الخادم — جرّب مرة أخرى بعد قليل';
-    return raw || 'تعذر تنفيذ طلب الذكاء الاصطناعي — حاول مرة أخرى';
+    const typeLabels = (p.types && p.types.length ? p.types : ['mcq'])
+      .map((t) => types[t] || t)
+      .join('، ');
+    const difficultyNote = {
+      'سهل': 'أسئلة مباشرة من جوهر الدرس تناسب جميع الطلاب.',
+      'متوسط': 'مزيج متوازن: أغلب الأسئلة متوسطة مع بعض الأسئلة السهلة.',
+      'صعب': 'أسئلة تفكير وتطبيق لكنها داخل حدود الدرس المحدد.',
+      'متدرج': 'ترتيب تصاعدي: ابدأ بالأسئلة السهلة وانتهِ بالأصعب تدريجيًا.',
+    };
+
+    return `أنت مختص خبير في إعداد الامتحانات المدرسية في مصر وفق المنهج الرسمي.
+
+أنشئ امتحانًا وفق المواصفات التالية بالضبط:
+
+- المادة: ${p.subject}
+- الصف الدراسي: ${p.grade}
+- الدرس / الوحدة: ${p.topic}
+- عدد الأسئلة: ${p.questionCount} سؤال بالضبط (لا تزيد ولا تنقص)
+- الدرجة النهائية: ${p.totalMarks} درجة (مجموع درجات الأسئلة يجب أن يساوي هذا الرقم بالضبط)
+- زمن الامتحان: ${p.durationMinutes} دقيقة
+- مستوى الصعوبة: ${p.difficulty} — ${difficultyNote[p.difficulty] || ''}
+- أنواع الأسئلة المطلوبة فقط: ${typeLabels}
+${p.extraInstructions ? `- تعليمات إضافية من المدرس (التزم بها): ${p.extraInstructions}` : ''}
+
+قواعد إلزامية لا تخالفها:
+1. التزم حصرًا بالمادة والصف والدرس/الوحدة المحددين — ممنوع اختراع محتوى من دروس أخرى أو منهج غير محدد.
+2. لا تكرر أي سؤال ولا تكرر فكرة سؤال بصياغتين متشابهتين.
+3. مجموع حقل marks لجميع الأسئلة = ${p.totalMarks} بالضبط. وزّع الدرجات بمنطق (الاختيار من متعدد وصح-خطأ درجات صغيرة، المقالي والمسائل درجات أكبر).
+4. سؤال "اختيار من متعدد": options تحتوي 4 اختيارات بالضبط، وإجابة صحيحة واحدة فقط في answer (اكتب نص الإجابة الصحيحة كما هو في أحد الاختيارات حرفيًا).
+5. سؤال "صح أو خطأ": answer إما "صح" أو "خطأ"، ولا تضع options.
+6. سؤال "أكمل": أجب بإجابة قصيرة محددة في answer ولا تضع options.
+7. سؤال "مقالي" أو "مسألة": اكتب الإجابة النموذجية الكاملة القابلة للتصحيح في modelAnswer (وللمسألة: خطوات الحل والنتيجة النهائية).
+8. عبارات الأسئلة بالعربية الفصحى السليمة الواضحة، مناسبة لمرحلة ${p.grade}.
+9. لا ترقّم الأسئلة داخل نص السؤال — الترقيم يُولَّد تلقائيًا من التطبيق.
+10. أعِد JSON فقط دون أي شرح إضافي.
+
+صيغة JSON المطلوبة (نفس أسماء الحقول حرفيًا):
+{
+  "title": string,
+  "subject": string,
+  "grade": string,
+  "topic": string,
+  "durationMinutes": number,
+  "totalMarks": number,
+  "instructions": string,
+  "questions": [
+    {
+      "type": "mcq" | "truefalse" | "fill" | "essay" | "problem",
+      "text": string,
+      "options": string[],
+      "answer": string,
+      "modelAnswer": string,
+      "marks": number
+    }
+  ]
+}
+
+أعد JSON صالحًا فقط بدون Markdown أو شرح إضافي.`;
+  },
+
+  /* ============================================
+     بناء Prompt تحليل الطالب
+     (نفس منطق الـ Edge Function السابق — قواعد الخصوصية كما هي)
+     ============================================ */
+  buildAnalysisPrompt(p) {
+    return `أنت مستشار تربوي خبير في تحليل أداء الطلاب داخل نظام إدارة مدرسي مصري.
+
+ستستلم أدناه بيانات فعلية مسجلة لطالب (درجات، حضور، واجبات، ملاحظات مدرس، أهداف).
+
+⚠️ قاعدة صارمة لا تخالفها: اعتمد فقط على الأرقام والبيانات الموجودة في حقل "البيانات الفعلية" أدناه. ممنوع منعًا باتًا اختراع أي رقم أو درجة أو نسبة أو حدث غير موجود في البيانات. إذا كان أحد الجوانب بلا بيانات كافية، اذكر ذلك بلطف ووضوح في الموضع المناسب بدلًا من التخمين.
+
+البيانات الفعلية (JSON):
+${JSON.stringify(p)}
+
+المطلوب إخراج التحليل التالي بالعربية الفصحى المهنية المهذبة:
+1. summary: ملخص أداء الطالب (3-5 جمل يذكر الأرقام الفعلية الموجودة فقط، ويُنبّه للحكم المبدئي إذا كانت البيانات قليلة).
+2. strengths: نقاط القوة المبنية على أرقام فعلية (إن وُجدت).
+3. areasToImprove: نقاط تحتاج متابعة (مبنية على الأرقام الفعلية).
+4. possibleCauses: أسباب محتملة مستمدة من البيانات فقط — صِفها كاحتمالات ("قد يكون")، وممنوع الجزم بأي سبب غير مدعوم ببيانات.
+5. teacherRecommendations: توصيات عملية قابلة للتنفيذ للمدرس.
+6. improvementPlan: خطة تحسين للطالب (2-4 محاور، كل محور: title + steps قابلة للتنفيذ + metric مؤشر قياس واقعي).
+7. parentReport: تقرير احترافي ومهذب لولي الأمر بصيغة رسالة كاملة جاهزة للإرسال، مبنية على بيانات هذا الطالب فقط، بدون ذكر أي طالب آخر أو مقارنات أو بيانات مالية، وتنتهي بتشجيع مهذب وملاحظة أن التقرير مؤشر مبني على البيانات المسجلة.
+
+قواعد الخصوصية الإلزامية:
+- الاعتماد على بيانات الطالب الفعلية فقط.
+- عدم اختراع درجات أو نسب أو أحداث.
+- عدم إدخال بيانات مالية أو أرقام هواتف أو بيانات طلاب آخرين.
+- الأسباب المحتملة يجب أن تكون احتمالية وليست جزمًا.
+
+صيغة JSON المطلوبة (نفس أسماء الحقول حرفيًا):
+{
+  "summary": string,
+  "strengths": string[],
+  "areasToImprove": string[],
+  "possibleCauses": string[],
+  "teacherRecommendations": string[],
+  "improvementPlan": [
+    { "title": string, "steps": string[], "metric": string }
+  ],
+  "parentReport": string
+}
+
+أعد JSON صالحًا فقط بدون Markdown أو شرح إضافي.`;
   },
 
   /**
@@ -149,7 +333,7 @@ const AI = {
   },
 
   /**
-   * طلب تحليل طالب من CodeCraft (عبر Edge Function)
+   * طلب تحليل طالب من CodeCraft (مباشر من المتصفح)
    * يعيد Promise: { ok: true, data, source: 'codecraft' } أو يرفض بخطأ عربي
    */
   requestStudentAnalysis(studentId, periodDays = 0) {

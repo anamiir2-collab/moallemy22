@@ -143,6 +143,32 @@ moallemy/
 - Chart.js للرسوم البيانية
 - PWA (manifest + service worker)
 
+## الذكاء الاصطناعي (CodeCraft API)
+
+مزود الذكاء الاصطناعي السحابي هو **CodeCraft API** (OpenAI-compatible) — يُستدعى مباشرة من المتصفح:
+
+```js
+POST https://www.codecraftapi.com/v1/chat/completions
+Authorization: Bearer CODECRAFT_API_KEY
+Content-Type: application/json
+
+{
+  "model": "claude-opus-4.8",
+  "messages": [{ "role": "user", "content": "<prompt>" }],
+  "temperature": 0.75,
+  "max_tokens": 32768,
+  "response_format": { "type": "json_object" }
+}
+```
+
+المفتاح موضوع داخل `js/ai.js` بناءً على رغبة مالك المشروع. الاستجابة تُقرأ من `data.choices[0].message.content` ثم تُحلَّل عبر `parseJsonSafe`.
+
+المهام المدعومة:
+- `generate-exam` — توليد امتحان كامل (JSON: title, subject, grade, topic, durationMinutes, totalMarks, instructions, questions[])
+- `student-analysis` — تحليل أداء طالب (JSON: summary, strengths, areasToImprove, possibleCauses, teacherRecommendations, improvementPlan, parentReport)
+
+> ⚠️ تنبيه أمني: وضع المفتاح في `js/ai.js` يكشفه لأي مستخدم يفتح أدوات المتصفح. راجع فريق CodeCraft لإضافة قيود استخدام (domain restriction, spending limits) وتدوير المفتاح دوريًا.
+
 ## الإصدار
 
 1.1.0 — سبتمبر 2026 — التحول لنظام أونلاين عبر Supabase
