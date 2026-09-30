@@ -1,4 +1,4 @@
-/* مُعلّمي Service Worker - v1.2.0 (Gemini AI: التحليل الذكي + مولد الامتحانات) */
+/* مُعلّمي Service Worker - v1.2.0 (CodeCraft AI: التحليل الذكي + مولد الامتحانات) */
 const APP_VERSION = 'v1.2.0';
 const CACHE_NAME = `moallemy-${APP_VERSION}`;
 const ASSETS = [

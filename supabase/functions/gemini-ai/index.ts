@@ -2,9 +2,13 @@
 //   مُعلّمي | gemini-ai Edge Function
 //   بوابة ذكاء اصطناعي آمنة للتطبيق
 // --------------------------------------------
+//   ملاحظة: اسم الدالة "gemini-ai" محفوظ لأسباب التوافق
+//   مع استدعاءات التطبيق الحالية، لكن المحرك السحابي
+//   الفعلي هو CodeCraft API (OpenAI-compatible).
+//
 //   الأمان:
-//   - المفتاح GEMINI_API_KEY يُقرأ حصريًا من Supabase Secrets
-//     (supabase secrets set GEMINI_API_KEY=...)
+//   - المفتاح CODECRAFT_API_KEY يُقرأ حصريًا من Supabase Secrets
+//     (supabase secrets set CODECRAFT_API_KEY=...)
 //   - ممنوع منعًا باتًا وضع المفتاح في أي ملف Frontend
 //   - الطلب مرفوض إلا بجلسة Supabase صالحة (Access Token)
 //
@@ -14,7 +18,8 @@
 //
 //   النشر:
 //   supabase functions deploy gemini-ai
-//   supabase secrets set GEMINI_API_KEY=your_key_here
+//   supabase secrets set CODECRAFT_API_KEY=your_codecraft_key_here
+//   supabase secrets set CODECRAFT_MODEL=claude-opus-4.8   (اختياري)
 // ============================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -56,72 +61,71 @@ function rateLimited(userId: string): boolean {
   return false;
 }
 
-// ===== إعدادات Gemini =====
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+// ===== إعدادات CodeCraft (OpenAI-compatible) =====
+// الموديل قابل للتغيير عبر Supabase Secret/Environment Variable.
+// القيمة الافتراضية: claude-opus-4.8
+const CODECRAFT_MODEL =
+  Deno.env.get('CODECRAFT_MODEL') || 'claude-opus-4.8';
+
+const CODECRAFT_ENDPOINT =
+  'https://www.codecraftapi.com/v1/chat/completions';
+
 const MAX_OUTPUT_TOKENS = 32768;
 
-// استدعاء Gemini مع محاولة النماذج بالتسلسل عند عدم توفر أحدها
-async function callGemini(
+// استدعاء CodeCraft (OpenAI-compatible chat completions)
+async function callCodeCraft(
   apiKey: string,
   prompt: string,
-  responseSchema: unknown,
   maxTokens = MAX_OUTPUT_TOKENS,
 ): Promise<string> {
-  let lastError = '';
-
-  for (const model of GEMINI_MODELS) {
-    try {
-      const generationConfig: Record<string, unknown> = {
-        temperature: 0.75,
-        topP: 0.95,
-        maxOutputTokens: maxTokens,
-        responseMimeType: 'application/json',
-        responseSchema,
-      };
-      // تعطيل "التفكير" في موديلات 2.5 لتسريع الاستجابة وتوفير التوكنز
-      if (model.startsWith('gemini-2.5')) {
-        generationConfig.thinkingConfig = { thinkingBudget: 0 };
-      }
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,
+  let res: Response;
+  try {
+    res = await fetch(CODECRAFT_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: CODECRAFT_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
           },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig,
-          }),
+        ],
+        temperature: 0.75,
+        max_tokens: maxTokens,
+        response_format: {
+          type: 'json_object',
         },
-      );
-
-      if (!res.ok) {
-        const errText = await res.text();
-        lastError = `${model}: ${res.status} ${errText.slice(0, 300)}`;
-        continue; // نموذج غير متاح أو خطأ مؤقت → جرّب التالي
-      }
-
-      const data = await res.json();
-      const parts = data?.candidates?.[0]?.content?.parts;
-      const text = (parts || [])
-        .map((p: any) => p.text || '')
-        .join('')
-        .trim();
-
-      if (!text) {
-        lastError = `${model}: استجابة فارغة من Gemini`;
-        continue;
-      }
-      return text;
-    } catch (err) {
-      lastError = `${model}: ${err instanceof Error ? err.message : String(err)}`;
-    }
+      }),
+    });
+  } catch (err) {
+    // خطأ في الشبكة أو تعذر الاتصال بالخدمة
+    throw new Error(
+      'CODECRAFT_CALL_FAILED: ' +
+        (err instanceof Error ? err.message : String(err)),
+    );
   }
 
-  throw new Error('GEMINI_CALL_FAILED: ' + lastError);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    // رمي خطأ يحمل كود الـ HTTP ليتعامل معه المعالج الرئيسي برسالة عربية واضحة
+    throw new Error(`CODECRAFT_HTTP_${res.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const data = await res.json().catch(() => null);
+  // OpenAI-compatible response: choices[0].message.content
+  const text: string =
+    data?.choices?.[0]?.message?.content ||
+    data?.choices?.[0]?.text ||
+    '';
+
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    throw new Error('CODECRAFT_CALL_FAILED: استجابة فارغة من CodeCraft');
+  }
+  return text.trim();
 }
 
 // استخراج JSON من نص الاستجابة (مع تحمل أي غلاف بسيط)
@@ -143,6 +147,8 @@ function parseJsonSafe(text: string): any | null {
 }
 
 // ===== Schema: توليد امتحان =====
+// ملاحظة: CodeCraft (OpenAI-compatible) يعتمد على response_format من نوع json_object
+// مع تعليمات صريحة داخل الـ Prompt لضبط أسماء الحقول، بدلًا من responseSchema الصارم.
 const examSchema = {
   type: 'object',
   properties: {
@@ -253,7 +259,29 @@ ${p.extraInstructions ? `- تعليمات إضافية من المدرس (الت
 8. عبارات الأسئلة بالعربية الفصحى السليمة الواضحة، مناسبة لمرحلة ${p.grade}.
 9. لا ترقّم الأسئلة داخل نص السؤال — الترقيم يُولَّد تلقائيًا من التطبيق.
 10. أعِد JSON فقط دون أي شرح إضافي.
-11. اكتب في instructions تعليمات امتحان قصيرة مناسبة (زمن الامتحان، الإجابة على جميع الأسئلة، إلخ).`;
+
+صيغة JSON المطلوبة (نفس أسماء الحقول حرفيًا):
+{
+  "title": string,
+  "subject": string,
+  "grade": string,
+  "topic": string,
+  "durationMinutes": number,
+  "totalMarks": number,
+  "instructions": string,
+  "questions": [
+    {
+      "type": "mcq" | "truefalse" | "fill" | "essay" | "problem",
+      "text": string,
+      "options": string[] (لمسائل الصحيح/خطأ والأكمل والمقالي يمكن حذفها أو تركها فارغة),
+      "answer": string,
+      "modelAnswer": string (للمقالي والمسائل فقط),
+      "marks": number
+    }
+  ]
+}
+
+أعد JSON صالحًا فقط بدون Markdown أو شرح إضافي.`;
 }
 
 // ===== بناء Prompt: تحليل الطالب =====
@@ -271,10 +299,31 @@ ${JSON.stringify(p)}
 1. summary: ملخص أداء الطالب (3-5 جمل يذكر الأرقام الفعلية الموجودة فقط، ويُنبّه للحكم المبدئي إذا كانت البيانات قليلة).
 2. strengths: نقاط القوة المبنية على أرقام فعلية (إن وُجدت).
 3. areasToImprove: نقاط تحتاج متابعة (مبنية على الأرقام الفعلية).
-4. possibleCauses: أسباب محتملة مستمدة من البيانات فقط — صِغها كاحتمالات ("قد يكون")، وممنوع الجزم بأي سبب غير مدعوم ببيانات.
+4. possibleCauses: أسباب محتملة مستمدة من البيانات فقط — صِفها كاحتمالات ("قد يكون")، وممنوع الجزم بأي سبب غير مدعوم ببيانات.
 5. teacherRecommendations: توصيات عملية قابلة للتنفيذ للمدرس.
 6. improvementPlan: خطة تحسين للطالب (2-4 محاور، كل محور: title + steps قابلة للتنفيذ + metric مؤشر قياس واقعي).
-7. parentReport: تقرير احترافي ومهذب لولي الأمر بصيغة رسالة كاملة جاهزة للإرسال، مبنية على بيانات هذا الطالب فقط، بدون ذكر أي طالب آخر أو مقارنات أو بيانات مالية، وتنتهي بتشجيع مهذب وملاحظة أن التقرير مؤشر مبني على البيانات المسجلة.`;
+7. parentReport: تقرير احترافي ومهذب لولي الأمر بصيغة رسالة كاملة جاهزة للإرسال، مبنية على بيانات هذا الطالب فقط، بدون ذكر أي طالب آخر أو مقارنات أو بيانات مالية، وتنتهي بتشجيع مهذب وملاحظة أن التقرير مؤشر مبني على البيانات المسجلة.
+
+قواعد الخصوصية الإلزامية:
+- الاعتماد على بيانات الطالب الفعلية فقط.
+- عدم اختراع درجات أو نسب أو أحداث.
+- عدم إدخال بيانات مالية أو أرقام هواتف أو بيانات طلاب آخرين.
+- الأسباب المحتملة يجب أن تكون احتمالية وليست جزمًا.
+
+صيغة JSON المطلوبة (نفس أسماء الحقول حرفيًا):
+{
+  "summary": string,
+  "strengths": string[],
+  "areasToImprove": string[],
+  "possibleCauses": string[],
+  "teacherRecommendations": string[],
+  "improvementPlan": [
+    { "title": string, "steps": string[], "metric": string }
+  ],
+  "parentReport": string
+}
+
+أعد JSON صالحًا فقط بدون Markdown أو شرح إضافي.`;
 }
 
 // ===== الدخول =====
@@ -313,10 +362,10 @@ Deno.serve(async (req) => {
     }
 
     // 3) قراءة المفتاح من Secrets فقط (لا يوجد مفتاح في الفرونت أبدًا)
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('CODECRAFT_API_KEY');
     if (!apiKey) {
       return fail(
-        'مفتاح الذكاء الاصطناعي غير مهيأ على الخادم — يجب تنفيذ: supabase secrets set GEMINI_API_KEY=...',
+        'مفتاح الذكاء الاصطناعي غير مهيأ على الخادم',
         500,
       );
     }
@@ -338,7 +387,7 @@ Deno.serve(async (req) => {
       }
       const qCount = Math.min(50, Math.max(5, parseInt(payload.questionCount, 10) || 10));
       const prompt = buildExamPrompt({ ...payload, questionCount: qCount });
-      const text = await callGemini(apiKey, prompt, examSchema);
+      const text = await callCodeCraft(apiKey, prompt);
       const exam = parseJsonSafe(text);
       if (!exam || !Array.isArray(exam.questions) || exam.questions.length === 0) {
         return fail('تعذر توليد امتحان صالح — جرّب إعادة التوليد', 502);
@@ -351,7 +400,7 @@ Deno.serve(async (req) => {
         return fail('بيانات ناقصة: student');
       }
       const prompt = buildAnalysisPrompt(payload);
-      const text = await callGemini(apiKey, prompt, analysisSchema, 16384);
+      const text = await callCodeCraft(apiKey, prompt, 16384);
       const analysis = parseJsonSafe(text);
       if (!analysis || typeof analysis.summary !== 'string') {
         return fail('تعذر توليد تحليل صالح — جرّب مرة أخرى', 502);
@@ -363,9 +412,35 @@ Deno.serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[gemini-ai] error:', msg);
-    if (msg.startsWith('GEMINI_CALL_FAILED')) {
-      return fail('تعذر الاتصال بخدمة الذكاء الاصطناعي حاليًا — جرّب بعد قليل', 502);
+
+    // معالجة أخطاء CodeCraft إلى رسائل عربية واضحة للمستخدم
+    if (msg.startsWith('CODECRAFT_HTTP_401') || msg.includes(' 401 ')) {
+      return fail('مفتاح خدمة الذكاء الاصطناعي غير صالح أو منتهي', 401);
     }
+    if (msg.startsWith('CODECRAFT_HTTP_429') || msg.includes(' 429 ')) {
+      return fail('تم تجاوز حد الاستخدام، حاول مرة أخرى لاحقًا', 429);
+    }
+    if (msg.startsWith('CODECRAFT_HTTP_402') || msg.includes(' 402 ')) {
+      return fail('رصيد خدمة الذكاء الاصطناعي غير كافٍ', 402);
+    }
+    if (
+      msg.startsWith('CODECRAFT_HTTP_500') ||
+      msg.startsWith('CODECRAFT_HTTP_502') ||
+      msg.startsWith('CODECRAFT_HTTP_503') ||
+      /\b(500|502|503)\b/.test(msg)
+    ) {
+      return fail(
+        'تعذر الاتصال بخدمة الذكاء الاصطناعي حاليًا — حاول مرة أخرى بعد قليل',
+        503,
+      );
+    }
+    if (msg.startsWith('CODECRAFT_CALL_FAILED')) {
+      return fail(
+        'تعذر الاتصال بخدمة الذكاء الاصطناعي حاليًا — حاول مرة أخرى بعد قليل',
+        502,
+      );
+    }
+
     return fail('حدث خطأ غير متوقع في الخادم', 500);
   }
 });

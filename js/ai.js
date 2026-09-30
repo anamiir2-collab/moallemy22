@@ -3,7 +3,7 @@
    محرك التحليل المحلي (Local Analysis Engine)
    - يعمل بالكامل على بيانات الطالب الفعلية من التخزين
    - ممنوع منعًا باتًا وضع أي API Key في الفرونت
-   - Provider interfaces: محلي + سحابي عبر Supabase Edge Function (Gemini)
+   - Provider interfaces: محلي + سحابي عبر Supabase Edge Function (CodeCraft)
    ============================================ */
 
 /* ============================================
@@ -20,7 +20,7 @@ const AIProviders = {
     }
   },
   cloud: {
-    name: 'سحابي (Gemini عبر Edge Function)',
+    name: 'سحابي (CodeCraft AI)',
     isReady() {
       // الجاهزية تتطلب عميل Supabase + جلسة حقيقية (الوضع التجريبي لا يدعم السحابة)
       // لا يُقرأ أي مفتاح من الفرونت — المفتاح داخل Supabase Secrets حصراً
@@ -35,7 +35,7 @@ const AIProviders = {
     /**
      * استدعاء موحد لـ Edge Function (gemini-ai)
      * يستخدم جلسة المستخدم الحالية و Access Token تلقائيًا عبر supabase-js
-     * لا يُرسل أي مفتاح Gemini من هنا
+     * لا يُرسل أي مفتاح CodeCraft من هنا — المفتاح داخل Supabase Secrets حصراً
      */
     invoke(task, payload) {
       if (!this.isReady()) {
@@ -55,10 +55,10 @@ const AIProviders = {
         });
     },
     analyze(payload) {
-      // توافق مع الواجهة القديمة: يحول استجابة Gemini إلى نص موحد
+      // توافق مع الواجهة القديمة: يحول استجابة CodeCraft إلى نص موحد
       return this.invoke('student-analysis', payload).then((data) => ({
         text: data.parentReport || data.summary || '',
-        meta: { engine: 'gemini', data }
+        meta: { engine: 'codecraft', data }
       }));
     }
   }
@@ -73,7 +73,7 @@ const AI = {
   provider() { return AIProviders[this.activeProvider] || AIProviders.local; },
 
   /* ============================================
-     Gemini عبر Edge Function — أدوات مساعدة
+     CodeCraft عبر Edge Function — أدوات مساعدة
      ============================================ */
 
   // سبب عربي واضح لعدم جاهزية المزود السحابي
@@ -101,9 +101,9 @@ const AI = {
   },
 
   /**
-   * بناء حزمة بيانات الطالب الفعلية لإرسالها إلى Gemini
+   * بناء حزمة بيانات الطالب الفعلية لإرسالها إلى CodeCraft
    * مبدأ صارم: بيانات مسجلة فقط — بدون هواتف أو بيانات مالية أو طلاب آخرين
-   * ما لا يوجد له بيانات يُرسل فارغًا/صفرًا ليصرّح Gemini بغياب البيانات
+   * ما لا يوجد له بيانات يُرسل فارغًا/صفرًا ليصرّح CodeCraft بغياب البيانات
    */
   buildStudentAnalysisPayload(studentId, periodDays = 0) {
     const data = AIAnalysis.prepare(studentId, periodDays);
@@ -149,8 +149,8 @@ const AI = {
   },
 
   /**
-   * طلب تحليل طالب من Gemini (عبر Edge Function)
-   * يعيد Promise: { ok: true, data, source: 'gemini' } أو يرفض بخطأ عربي
+   * طلب تحليل طالب من CodeCraft (عبر Edge Function)
+   * يعيد Promise: { ok: true, data, source: 'codecraft' } أو يرفض بخطأ عربي
    */
   requestStudentAnalysis(studentId, periodDays = 0) {
     const payload = AI.buildStudentAnalysisPayload(studentId, periodDays);
@@ -158,7 +158,7 @@ const AI = {
       return Promise.reject(new Error('لم يتم العثور على بيانات هذا الطالب'));
     }
     return AIProviders.cloud.invoke('student-analysis', payload)
-      .then(data => ({ ok: true, data, source: 'gemini', payload }));
+      .then(data => ({ ok: true, data, source: 'codecraft', payload }));
   },
 
   /* ============================================

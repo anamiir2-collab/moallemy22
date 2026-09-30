@@ -1,12 +1,13 @@
 /* ============================================
    مُعلّمي | ai-generator.js
-   مولّد الامتحانات + التحليل الذكي (Gemini)
+   مولّد الامتحانات + التحليل الذكي (CodeCraft AI)
    --------------------------------------------
    - الاستدعاء عبر Supabase Edge Function بجلسة المستخدم
    - لا يحتوي هذا الملف على أي مفتاح API نهائيًا
    - الامتحانات المولدة تُحفظ محليًا في ai_exams
      ولا تلمس الاختبارات العادية إطلاقًا
    - التحليل الذكي يعتمد على البيانات المسجلة فقط
+   - اسم Edge Function محفوظ كـ gemini-ai لأسباب التوافق
    ============================================ */
 
 const AIGenerator = {
@@ -770,7 +771,7 @@ const AIGenerator = {
 
     try {
       const res = await AI.requestStudentAnalysis(studentId);
-      this.renderAnalysis(studentId, res.data, 'gemini');
+      this.renderAnalysis(studentId, res.data, 'codecraft');
     } catch (err) {
       this.renderAnalysisError(err.message || 'تعذر إتمام التحليل', studentId);
     }
@@ -820,7 +821,7 @@ const AIGenerator = {
     const body = document.getElementById('ai-analysis-body') || document.querySelector('#modal-content .modal-body');
     if (!body) return;
 
-    // مؤشرات فعلية محسوبة محليًا (لا تعتمد على Gemini)
+    // مؤشرات فعلية محسوبة محليًا (لا تعتمد على CodeCraft)
     let chipsHtml = '';
     try {
       const localData = AIAnalysis.prepare(studentId);
@@ -961,7 +962,7 @@ const AIGenerator = {
   ${planHtml ? `<h2>خطة التحسين</h2>${planHtml}` : ''}
   ${data.parentReport ? `<h2>تقرير ولي الأمر</h2><div class="pa-report">${esc(data.parentReport)}</div>` : ''}
   <div class="pa-footer">
-    تحليل مبني على البيانات المسجلة في تطبيق مُعلّمي${source === 'local' ? ' (محرك محلي)' : ' (Gemini AI)'} — مؤشر استرشادي والقرار النهائي للمدرس.
+    تحليل مبني على البيانات المسجلة في تطبيق مُعلّمي${source === 'local' ? ' (محرك محلي)' : ' (CodeCraft AI)'} — مؤشر استرشادي والقرار النهائي للمدرس.
     <br>${esc(settings.reportCenter || teacher.name || '')}
   </div>
   <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); };<\/script>
