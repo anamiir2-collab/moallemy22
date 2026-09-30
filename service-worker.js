@@ -1,5 +1,5 @@
-/* مُعلّمي Service Worker - v1.2.0 (CodeCraft AI: التحليل الذكي + مولد الامتحانات) */
-const APP_VERSION = 'v1.2.0';
+/* مُعلّمي Service Worker - v1.3.0 (نظام المناهج الدراسية — وزارة التربية والتعليم) */
+const APP_VERSION = 'v1.3.0';
 const CACHE_NAME = `moallemy-${APP_VERSION}`;
 const ASSETS = [
   './',
@@ -26,6 +26,12 @@ const ASSETS = [
   './js/ai-analysis.js',
   './js/ai.js',
   './js/ai-generator.js',
+  './data/moe-catalog.js',
+  './js/curriculum-data.js',
+  './js/curriculum-api.js',
+  './js/curriculum-ui.js',
+  './js/curriculum-ai.js',
+  './css/curriculum.css',
   './js/payments.js',
   './js/reports.js',
   './js/calendar.js',

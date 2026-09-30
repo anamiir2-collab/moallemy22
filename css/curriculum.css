@@ -1,0 +1,627 @@
+/* ============================================
+   مُعلّمي | css/curriculum.css
+   نظام المناهج الدراسية — تنسيقات الواجهة
+   متوافق مع نظام التصميم الأساسي (style.css):
+   الخطوط Cairo/Tajawal، الألوان البنية/الذهبي، RTL
+   ============================================ */
+
+/* ============ شريط حالة المزامنة ============ */
+.curriculum-sync-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  background: var(--color-primary-softer);
+  border: 1px solid var(--color-primary-soft);
+  border-radius: var(--radius-md, 12px);
+  padding: 10px 14px;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.curriculum-sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-soft);
+  flex-shrink: 0;
+}
+
+.curriculum-sync-state {
+  margin-inline-start: auto;
+  color: var(--text-tertiary);
+}
+
+/* ============ البحث ============ */
+.curriculum-search {
+  margin-bottom: var(--space-3);
+}
+
+.cur-search-back {
+  margin-bottom: var(--space-2);
+}
+
+/* ============ الفلاتر المتسلسلة ============ */
+.cur-filter-section {
+  margin-bottom: var(--space-4);
+}
+
+.cur-filter-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.cur-filter-row .half {
+  flex: 1 1 260px;
+}
+
+.cur-filter-label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+/* بطاقات المراحل */
+.cur-stage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+
+.cur-stage-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-surface-3);
+  border-radius: var(--radius-md, 12px);
+  font-family: var(--font-base);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+
+.cur-stage-card:active {
+  transform: scale(.98);
+}
+
+.cur-stage-card.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.cur-stage-icon {
+  color: var(--color-primary);
+  display: inline-flex;
+}
+
+/* شرائح الاختيار (تعتمد على chip الأساسي مع لمسات خاصة) */
+.cur-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ============ شبكة الكتب ============ */
+.cur-results-count {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.cur-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.cur-book-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-3);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+  display: flex;
+  flex-direction: column;
+}
+
+.cur-book-card:active {
+  transform: scale(.98);
+}
+
+.cur-book-card.fav {
+  border-color: var(--color-gold);
+}
+
+@media (hover: hover) {
+  .cur-book-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(139, 94, 52, .15);
+  }
+}
+
+/* غلاف الكتاب (تدرج من الهوية — الأغلفة الرسمية غير متاحة رقميًا) */
+.cur-book-cover {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.cur-book-card:nth-child(3n+2) .cur-book-cover {
+  background: linear-gradient(145deg, var(--color-gold) 0%, var(--color-gold-dark) 100%);
+}
+
+.cur-book-card:nth-child(3n) .cur-book-cover {
+  background: linear-gradient(145deg, #7A6A54 0%, #4A3F31 100%);
+}
+
+.cur-book-cover.sm {
+  width: 52px;
+  min-width: 52px;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cur-book-cover-spine {
+  width: 10px;
+  background: rgba(0, 0, 0, .18);
+  flex-shrink: 0;
+}
+
+.cur-book-cover-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 6px;
+  text-align: center;
+  color: #fff;
+}
+
+.cur-book-cover-letter {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: .95;
+}
+
+.cur-book-cover.sm .cur-book-cover-letter {
+  font-size: 18px;
+}
+
+.cur-book-cover-subject {
+  font-size: 10px;
+  font-weight: 700;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .9;
+}
+
+.cur-book-cover.sm .cur-book-cover-subject {
+  display: none;
+}
+
+.cur-book-cover-grade {
+  font-size: 9px;
+  opacity: .7;
+}
+
+.cur-book-cover.sm .cur-book-cover-grade {
+  display: none;
+}
+
+/* معلومات الكتاب */
+.cur-book-info {
+  padding: 10px 12px 12px;
+}
+
+.cur-book-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cur-book-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.cur-book-meta.sub {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.cur-book-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+/* ============ تفاصيل الكتاب ============ */
+.cur-book-detail {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.cur-book-detail-cover {
+  width: 120px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+  border: 1px solid var(--color-surface-3);
+}
+
+.cur-book-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cur-book-detail-title {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.cur-book-detail-rows {
+  display: grid;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+}
+
+.cur-book-detail-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cur-book-detail-rows span {
+  color: var(--text-tertiary);
+}
+
+.cur-book-detail-rows b {
+  font-weight: 700;
+  text-align: left;
+}
+
+.cur-book-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.cur-book-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.cur-book-source-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: var(--space-2);
+  line-height: 1.5;
+}
+
+/* ============ التقدم ============ */
+.cur-progress-track {
+  height: 8px;
+  background: var(--color-surface-3);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.cur-progress-track.sm {
+  height: 6px;
+}
+
+.cur-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+
+.cur-progress-block {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-surface-3);
+  border-radius: var(--radius-md, 12px);
+  padding: 12px;
+  margin-top: var(--space-3);
+}
+
+/* ============ خطة التدريس ============ */
+.cur-plan-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.cur-plan-summary .cur-progress-block {
+  flex: 1;
+  margin-top: 0;
+}
+
+.cur-units-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-inline-end: 2px;
+}
+
+.cur-unit-block {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-surface-3);
+  border-radius: var(--radius-md, 12px);
+  padding: 12px;
+}
+
+.cur-unit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: 6px;
+}
+
+.cur-unit-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.cur-unit-title b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cur-unit-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cur-lessons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.cur-lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-3);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.cur-lesson-row.taught {
+  background: var(--color-success-soft);
+  border-color: transparent;
+}
+
+.cur-lesson-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface-3);
+  background: var(--color-surface);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+
+.cur-lesson-check.done {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.cur-lesson-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.cur-lesson-title span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cur-taught-date {
+  font-size: 10px;
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.cur-lesson-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cur-lessons-empty {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.cur-plan-tools {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--color-surface-3);
+}
+
+.cur-plan-tools-title {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+/* ============ منتقي المنهج ============ */
+.cur-picker-layer {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal, 1000) + 10);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.cur-picker-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 21, 19, 0.45);
+  backdrop-filter: blur(2px);
+  animation: fadeIn var(--transition-base, .25s);
+}
+
+.cur-picker-layer .modal-content {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  width: 100%;
+}
+
+.cur-picker {
+  min-height: 220px;
+}
+
+.cur-picker-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.cur-picker-crumb:empty {
+  display: none;
+}
+
+/* ============ مرجع مرتبط (شريحة العرض داخل النماذج) ============ */
+.cur-ref-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.cur-ref-chip.multi {
+  align-items: center;
+}
+
+.cur-ref-chip svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cur-ref-clear {
+  margin-inline-start: auto;
+  background: none;
+  border: none;
+  color: var(--color-primary-dark);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+/* ============ صفحة منهجي ============ */
+.cur-plan-last,
+.cur-plan-next {
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--text-secondary);
+}
+
+.cur-plan-next {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ============ الوضع الداكن ============ */
+[data-theme="dark"] .curriculum-sync-bar {
+  background: rgba(139, 94, 52, .12);
+  border-color: rgba(139, 94, 52, .25);
+}
+
+[data-theme="dark"] .cur-stage-card {
+  background: var(--color-surface-2, #211d19);
+  border-color: var(--color-surface-3, #2e2924);
+}
+
+[data-theme="dark"] .cur-book-card,
+[data-theme="dark"] .cur-lesson-row,
+[data-theme="dark"] .cur-unit-block {
+  background: var(--color-surface-2, #211d19);
+}
+
+[data-theme="dark"] .cur-progress-track {
+  background: var(--color-surface-3, #2e2924);
+}
+
+[data-theme="dark"] .cur-book-cover {
+  filter: saturate(.9);
+}
+
+/* ============ الطباعة: لا تُطبع عناصر المناهج ============ */
+@media print {
+  .curriculum-sync-bar,
+  .cur-filter-section,
+  .cur-plan-tools {
+    display: none !important;
+  }
+}

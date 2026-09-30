@@ -167,6 +167,7 @@ const Lessons = {
             <label>موضوع الدرس</label>
             <input type="text" name="topic" placeholder="مثال: الفصل الأول - الجبر">
           </div>
+          ${window.CurriculumUI ? CurriculumUI.lessonLinkSection() : ''}
           <div class="field">
             <label>ملاحظات</label>
             <textarea name="notes" placeholder="ملاحظات..."></textarea>
@@ -191,6 +192,9 @@ const Lessons = {
     // Trigger for pre-selected group
     if (groupId) document.querySelector('[name="groupId"]').dispatchEvent(new Event('change'));
 
+    // ربط الحصة بالمنهج الرسمي (اختياري — وحدة المناهج)
+    const curLink = (window.CurriculumUI && document.getElementById('cur-lesson-link-btn')) ? CurriculumUI.bindLessonLink() : null;
+
     document.getElementById('add-lesson-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -202,6 +206,13 @@ const Lessons = {
       end.setMinutes(end.getMinutes() + data.duration);
       data.endTime = end.toTimeString().slice(0, 5);
       if (!data.location && g) data.location = g.location;
+      // حفظ مرجع المنهج مع الحصة
+      if (curLink && curLink.getRef()) {
+        const r = curLink.getRef();
+        data.curriculum = CurriculumData.reference(r);
+        data.curriculum.lessonId = (r.lessonIds && r.lessonIds[0]) || '';
+        data.curriculum.unitId = r.unitId || '';
+      }
       Storage.insert(Storage.KEYS.lessons, data);
       UI.toast('تمت إضافة الحصة بنجاح', 'success');
       UI.closeModal();
@@ -355,6 +366,13 @@ const Lessons = {
         </div>
 
         ${l.topic ? `<div class="card" style="margin-bottom: var(--space-3);"><p style="color:var(--text-tertiary);font-size:var(--font-size-xs);">موضوع الدرس</p><p style="margin-top:4px;">${l.topic}</p></div>` : ''}
+
+        ${l.curriculum && window.CurriculumUI ? `
+          <div class="cur-ref-chip" style="margin-bottom: var(--space-3);">
+            ${Icons.get('book', 14)}
+            <span>مرتبط بالمنهج الرسمي: ${esc(CurriculumUI.refLabel(l.curriculum))}<br><small style="font-weight:400;">المصدر: ${esc(l.curriculum.source || 'وزارة التربية والتعليم')}</small></span>
+          </div>
+        ` : ''}
 
         ${att.length > 0 ? `
           <div class="stats-grid" style="margin-bottom: var(--space-3);">

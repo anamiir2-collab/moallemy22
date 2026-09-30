@@ -60,7 +60,7 @@ const AIGenerator = {
   /* ============================================
      1) مولّد الامتحانات — النموذج
      ============================================ */
-  openGenerator() {
+  openGenerator(preselect) {
     const pre = this.precheck();
     if (!pre.ok) { UI.toast(pre.msg, 'warning'); return; }
 
@@ -68,6 +68,10 @@ const AIGenerator = {
     const teacher = (typeof Auth !== 'undefined' && Auth.getTeacher()) || {};
     const groups = Storage.list(Storage.KEYS.groups);
     const defaultSubject = teacher.subject || '';
+
+    // اختيار مسبق من المناهج (زر "امتحان AI" داخل صفحة الكتاب)
+    const preBook = (preselect && preselect.curriculumBookId && window.CurriculumData)
+      ? CurriculumData.book(preselect.curriculumBookId) : null;
 
     UI.modal({
       title: 'توليد امتحان بالذكاء الاصطناعي',
@@ -84,10 +88,12 @@ const AIGenerator = {
             <div class="field">
               <label>الصف الدراسي <span class="required">*</span></label>
               <select name="grade" required>
-                ${this.gradeOptions()}
+                ${this.gradeOptions(preBook ? preBook.grade : '')}
               </select>
             </div>
           </div>
+
+          ${window.CurriculumUI ? CurriculumUI.aiSourceSection(preBook ? preBook.id : '') : ''}
 
           <div class="field">
             <label>الدرس / الوحدة <span class="required">*</span></label>
@@ -159,6 +165,10 @@ const AIGenerator = {
       });
     });
 
+    // مصدر المنهج الرسمي (وحدة المناهج — اختيار الوحدة/الدروس للتوليد الموجه)
+    const curAI = (window.CurriculumUI && document.getElementById('cur-ai-source'))
+      ? CurriculumUI.bindAiSource(preBook ? preBook.id : '') : { getSel: () => null };
+
     // إرسال النموذج
     document.getElementById('ai-exam-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -184,12 +194,32 @@ const AIGenerator = {
       if (!(options.totalMarks > 0)) { UI.toast('أدخل درجة نهائية صحيحة', 'warning'); return; }
       if (!(options.durationMinutes > 0)) { UI.toast('أدخل زمنًا صحيحًا للامتحان', 'warning'); return; }
 
+      // التوليد من منهج الوزارة — إرفاق سياق المنهج المختار
+      const curSel = curAI.getSel();
+      if (curSel && curSel.bookId) {
+        const cb = CurriculumData.book(curSel.bookId);
+        if (cb) {
+          // توحيد المادة والصف مع الكتاب الرسمي المختار
+          options.subject = cb.subject;
+          options.grade = cb.grade;
+          if (!options.topic) options.topic = 'المنهج الرسمي';
+          options.curriculum = {
+            bookId: curSel.bookId,
+            unitId: curSel.unitId || '',
+            lessonIds: curSel.lessonIds || [],
+            term: cb.term,
+            subject: cb.subject,
+            grade: cb.grade
+          };
+        }
+      }
+
       this.generateExam(options);
     });
   },
 
-  // خيارات الصف: صفوف الطلاب الفعلية أولًا ثم مستويات المراحل
-  gradeOptions() {
+  // خيارات الصف: صفوف الطلاب الفعلية أولًا ثم مستويات المراحل (مع صف مختار مسبقًا)
+  gradeOptions(preselectGrade) {
     const stages = Storage.get(Storage.KEYS.stages, []);
     const existing = [];
     Storage.list(Storage.KEYS.students).forEach(s => {
@@ -197,13 +227,17 @@ const AIGenerator = {
     });
 
     let html = '<option value="">اختر الصف</option>';
-    existing.forEach(cn => { html += `<option value="${esc(cn)}">${esc(cn)}</option>`; });
+    existing.forEach(cn => { html += `<option value="${esc(cn)}" ${cn === preselectGrade ? 'selected' : ''}>${esc(cn)}</option>`; });
     stages.forEach(st => {
       (st.levels || []).forEach(lv => {
         if (existing.includes(lv)) return;
-        html += `<option value="${esc(lv)}">${esc(lv)} — ${esc(st.name)}</option>`;
+        html += `<option value="${esc(lv)}" ${lv === preselectGrade ? 'selected' : ''}>${esc(lv)} — ${esc(st.name)}</option>`;
       });
     });
+    // صف الكتاب الرسمي المختار من المناهج (إن لم يوجد أعلاه)
+    if (preselectGrade && !existing.includes(preselectGrade) && !html.includes(`value="${esc(preselectGrade)}"`)) {
+      html += `<option value="${esc(preselectGrade)}" selected>${esc(preselectGrade)} — منهج الوزارة</option>`;
+    }
     return html;
   },
 
@@ -400,6 +434,7 @@ const AIGenerator = {
       <div class="card ai-exam-header">
         <h3 class="ai-exam-title">${Icons.get('exam', 20)} ${esc(exam.title)}</h3>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: var(--space-2);">
+          ${exam.curriculum && exam.curriculum.source ? `<span class="badge badge-info">${Icons.get('book', 12)} ${esc(exam.curriculum.source)}</span>` : ''}
           <span class="badge badge-info">${esc(exam.subject)}</span>
           <span class="badge">${esc(exam.grade)}</span>
           ${exam.topic ? `<span class="badge">${esc(exam.topic)}</span>` : ''}
@@ -484,6 +519,8 @@ const AIGenerator = {
       totalMarks: this.lastExam.totalMarks,
       instructions: this.lastExam.instructions,
       questions: this.lastExam.questions,
+      // مرجع المنهج الرسمي (إن كان التوليد من منهج الوزارة)
+      curriculum: this.lastExam.curriculum || null,
       groupId: o.groupId || null,
       difficulty: o.difficulty || '',
       types: o.types || [],

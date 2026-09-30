@@ -136,6 +136,7 @@ const Exams = {
             <label>الدرس / الوحدة</label>
             <input type="text" name="topic" placeholder="مثال: الوحدة الأولى - الجبر">
           </div>
+          ${window.CurriculumUI ? CurriculumUI.examCurriculumSection() : ''}
           <div class="field">
             <label>ملاحظات</label>
             <textarea name="notes" placeholder="ملاحظات..."></textarea>
@@ -156,12 +157,26 @@ const Exams = {
       }
     });
 
+    // ربط الامتحان بالمنهج الرسمي (اختياري — وحدة المناهج)
+    const curExamLink = (window.CurriculumUI && document.getElementById('cur-exam-link-btn')) ? CurriculumUI.bindExamCurriculum() : null;
+
     document.getElementById('add-exam-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       const group = Storage.find(Storage.KEYS.groups, data.groupId);
       data.subject = group ? group.subject : '';
       data.maxGrade = parseFloat(data.maxGrade) || 20;
+      // حفظ مرجع المنهج مع الامتحان (الصف/المادة/الترم/الكتاب/الوحدة/الدروس)
+      if (curExamLink && curExamLink.getRef()) {
+        const r = curExamLink.getRef();
+        data.curriculum = CurriculumData.reference(r);
+        data.curriculum.unitId = r.unitId || '';
+        data.curriculumLessonIds = r.lessonIds || [];
+        if (!data.topic && r.lessonIds && r.lessonIds.length) {
+          const ls = r.lessonIds.map(id => (CurriculumData.lesson(id) || {}).title).filter(Boolean);
+          if (ls.length) data.topic = ls.join('، ');
+        }
+      }
       Storage.insert(Storage.KEYS.exams, data);
       UI.toast('تمت إضافة الاختبار بنجاح', 'success');
       UI.closeModal();
@@ -192,6 +207,13 @@ const Exams = {
             ${exam.topic ? `<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-tertiary);">الموضوع</span><span>${exam.topic}</span></div>` : ''}
           </div>
         </div>
+
+        ${exam.curriculum && window.CurriculumUI ? `
+          <div class="cur-ref-chip" style="margin-bottom: var(--space-4);">
+            ${Icons.get('book', 14)}
+            <span>مرتبط بالمنهج الرسمي: ${esc(CurriculumUI.refLabel(exam.curriculum))}${exam.curriculumLessonIds && exam.curriculumLessonIds.length > 1 ? `<br>عدد الدروس: ${exam.curriculumLessonIds.length}` : ''}<br><small style="font-weight:400;">المصدر: ${esc(exam.curriculum.source || 'وزارة التربية والتعليم')}</small></span>
+          </div>
+        ` : ''}
 
         ${grades.length > 0 ? `
           <div class="stats-grid" style="margin-bottom: var(--space-4);">

@@ -377,7 +377,10 @@ const App = {
     payments: () => Payments.render(),
     reports: () => Reports.render(),
     notifications: () => Notifications.render(),
-    settings: () => Settings.render()
+    settings: () => Settings.render(),
+    // نظام المناهج الدراسية — إضافة جديدة لا تلمس الأقسام الحالية
+    curriculum: () => CurriculumUI.render(),
+    'my-curriculum': () => CurriculumUI.renderMyCurriculum()
   },
 
   pageBinds: {
@@ -393,7 +396,10 @@ const App = {
     payments: () => Payments.bind(),
     reports: () => Reports.bind(),
     notifications: () => Notifications.bind(),
-    settings: () => Settings.bind()
+    settings: () => Settings.bind(),
+    // نظام المناهج الدراسية
+    curriculum: () => CurriculumUI.bind(),
+    'my-curriculum': () => CurriculumUI.bindMyCurriculum()
   },
 
   renderMore() {
@@ -414,6 +420,12 @@ const App = {
       { id: 'ai-exam-gen', icon: '✨', title: 'مولّد الامتحانات', desc: 'إنشاء امتحانات جاهزة في دقيقة', color: 'gold' }
     ];
 
+    // قسم المناهج الدراسية — مصدر رسمي: وزارة التربية والتعليم
+    const curriculumItems = [
+      { id: 'curriculum', icon: '📚', title: 'المناهج', desc: 'الكتب الرسمية — وزارة التربية والتعليم', color: '' },
+      { id: 'my-curriculum', icon: '🎯', title: 'منهجي', desc: 'متابعة تقدم المنهج والدروس المدرّسة', color: 'success' }
+    ];
+
     return `
       <div class="page-header">
         <h1 class="page-title">المزيد</h1>
@@ -421,6 +433,24 @@ const App = {
       </div>
 
       <div class="section-header" style="margin-bottom: var(--space-3);">
+        <h3 class="section-title">المناهج الدراسية</h3>
+      </div>
+      <div class="list stagger">
+        ${curriculumItems.map(item => `
+          <div class="list-item clickable" data-nav="${item.id}">
+            <div class="quick-action-icon ${item.color}">${item.icon}</div>
+            <div class="list-item-body">
+              <div class="list-item-title">${item.title}</div>
+              <div class="list-item-subtitle">${item.desc}</div>
+            </div>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="section-header" style="margin: var(--space-5) 0 var(--space-3);">
         <h3 class="section-title">الذكاء الاصطناعي</h3>
       </div>
       <div class="list stagger">
