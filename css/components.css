@@ -91,8 +91,20 @@
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-surface-3);
-  transition: all var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  animation: cardEntrance var(--transition-base) both;
 }
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-soft);
+}
+
+.card-elevated { box-shadow: var(--shadow-md); }
+.card-hover:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.card-clickable { cursor: pointer; }
+.card-clickable:active { transform: scale(0.98); }
 
 .card-elevated { box-shadow: var(--shadow-md); }
 .card-hover:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
@@ -657,8 +669,8 @@
   transition: all var(--transition-fast);
 }
 .lesson-card:active { transform: scale(0.99); }
-.lesson-card.completed { border-inline-start-color: var(--color-success); opacity: 0.85; }
-.lesson-card.cancelled { border-inline-start-color: var(--color-danger); opacity: 0.7; }
+.lesson-card.completed { border-inline-start-color: var(--color-success); opacity: 1; }
+.lesson-card.cancelled { border-inline-start-color: var(--color-danger); opacity: 1; }
 .lesson-card.postponed { border-inline-start-color: var(--color-warning); }
 
 .lesson-time {
