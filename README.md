@@ -1,18 +1,13 @@
-# مُعلّمي | Moallemy
+<h1 align="center"> مُعلّمي | Moallemy</h1>
 <p align="center">
-  <a href="https://github.com/moallemy22/moallemy22/actions/workflows/main.yml">
-    <img src="https://github.com/moallemy22/moallemy22/actions/workflows/main.yml/badge.svg" alt="Build Status">
-  </a>
-  <a href="./LICENSE">
-    <img src="https://img.shields.io/github/license/moallemy22/moallemy22?style=flat-square&color=blue" alt="License">
-  </a>
-  <a href="https://github.com/moallemy22/moallemy22/graphs/contributors">
-    <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
-  </a>
-  <a href="https://github.com/moallemy22/moallemy22/stargazers">
-    <img src="https://img.shields.io/github/stars/moallemy22/moallemy22?style=flat-square&color=yellow" alt="Stars">
-  </a>
+  <img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github" alt="Build Status">
+  <img src="https://img.shields.io/github/license/username/rafiqalquran?style=for-the-badge&color=blue" alt="License">
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge&logo=github" alt="PRs Welcome">
+  <img src="https://img.shields.io/github/stars/username/rafiqalquran?style=for-the-badge&color=yellow" alt="GitHub Stars">
 </p>
+
+---
+<div dir="rtl">
 
 ---
 
