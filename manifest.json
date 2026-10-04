@@ -1,0 +1,45 @@
+{
+  "name": "مُعلّمي | Moallemy",
+  "short_name": "مُعلّمي",
+  "description": "نظام إدارة متكامل للمدرسين في مصر: الطلاب، المجموعات، الحصص، الحضور، المدفوعات، التقارير",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F3EC",
+  "theme_color": "#8B5E34",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "إضافة طالب",
+      "short_name": "طالب",
+      "url": "./index.html?action=add-student"
+    },
+    {
+      "name": "تسجيل حضور",
+      "short_name": "حضور",
+      "url": "./index.html?action=quick-attendance"
+    },
+    {
+      "name": "تسجيل دفعة",
+      "short_name": "دفعة",
+      "url": "./index.html?action=quick-payment"
+    }
+  ]
+}
