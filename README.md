@@ -1,4 +1,20 @@
 # مُعلّمي | Moallemy
+<p align="center">
+  <a href="https://github.com/moallemy22/moallemy22/actions/workflows/main.yml">
+    <img src="https://github.com/moallemy22/moallemy22/actions/workflows/main.yml/badge.svg" alt="Build Status">
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/moallemy22/moallemy22?style=flat-square&color=blue" alt="License">
+  </a>
+  <a href="https://github.com/moallemy22/moallemy22/graphs/contributors">
+    <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
+  </a>
+  <a href="https://github.com/moallemy22/moallemy22/stargazers">
+    <img src="https://img.shields.io/github/stars/moallemy22/moallemy22?style=flat-square&color=yellow" alt="Stars">
+  </a>
+</p>
+
+---
 
 نظام إدارة متكامل **أونلاين** للمدرسين في مصر — إدارة الطلاب والمجموعات والحصص والحضور والمدفوعات والتقارير — مبني على **Supabase** مع دعم كامل للعمل دون اتصال (Offline-first).
 
