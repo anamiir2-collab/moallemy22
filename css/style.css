@@ -5,22 +5,22 @@
 
 :root {
   /* ===== Colors - Brand ===== */
-  --color-primary: #8B5E34;
-  --color-primary-light: #A87954;
-  --color-primary-dark: #6B4527;
-  --color-primary-soft: rgba(139, 94, 52, 0.08);
-  --color-primary-softer: rgba(139, 94, 52, 0.04);
+  --color-primary: #023c73;
+  --color-primary-light: #16558A;
+  --color-primary-dark: #012A51;
+  --color-primary-soft: rgba(2, 60, 115, 0.08);
+  --color-primary-softer: rgba(2, 60, 115, 0.04);
 
-  --color-gold: #C89B3C;
-  --color-gold-light: #DBB558;
-  --color-gold-dark: #A87F2A;
-  --color-gold-soft: rgba(200, 155, 60, 0.12);
+  --color-gold: #2F6FA5;
+  --color-gold-light: #5B8DB8;
+  --color-gold-dark: #1D527F;
+  --color-gold-soft: rgba(47, 111, 165, 0.12);
 
-  --color-bg: #F7F3EC;
+  --color-bg: #F2F6FA;
   --color-surface: #FFFFFF;
-  --color-surface-2: #FBF8F2;
-  --color-surface-3: #F0EBE0;
-  --color-dark: #171513;
+  --color-surface-2: #F7FAFC;
+  --color-surface-3: #E7EFF6;
+  --color-dark: #101D29;
 
   /* ===== Text ===== */
   --text-primary: #1F1B16;
