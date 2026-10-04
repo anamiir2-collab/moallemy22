@@ -16,10 +16,10 @@
   --color-gold-dark: #1D527F;
   --color-gold-soft: rgba(47, 111, 165, 0.12);
 
-  --color-bg: #F2F6FA;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F7FAFC;
-  --color-surface-3: #E7EFF6;
+  --color-bg: #E4EAF0;
+  --color-surface: #F8FAFC;
+  --color-surface-2: #EEF3F7;
+  --color-surface-3: #D7E0E8;
   --color-dark: #101D29;
 
   /* ===== Text ===== */
@@ -131,10 +131,10 @@
 
  /* ===== Dark Mode ===== */
 [data-theme="dark"] {
-  --color-bg: #071421;
-  --color-surface: #0D1D2D;
-  --color-surface-2: #12263A;
-  --color-surface-3: #18334D;
+  --color-bg: #0B151F;
+  --color-surface: #122130;
+  --color-surface-2: #182B3C;
+  --color-surface-3: #223A4F;
   --color-dark: #F2F6FA;
 
   --text-primary: #F1F6FA;
