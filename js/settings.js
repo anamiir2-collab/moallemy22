@@ -89,12 +89,98 @@ const Settings = {
       </div>
 
       <div class="section">
-        <h2 class="section-title" style="margin-bottom: var(--space-3);">المزامنة السحابية</h2>
-        <div class="settings-row" onclick="Settings.syncNow()">
-          <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9"/><polyline points="21 3 21 9 15 9"/></svg></div>
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">قوالب رسائل واتساب</h2>
+        <div class="settings-row" onclick="Settings.openTemplateEditor('absent')">
+          <div class="settings-icon">⚠️</div>
           <div class="settings-body">
-            <div class="settings-title">حالة المزامنة</div>
-            <div class="settings-desc" id="cloud-status-desc">${Settings.cloudStatusText()}</div>
+            <div class="settings-title">قالب غياب الطالب</div>
+            <div class="settings-desc">${(settings.absentTemplate || WhatsAppTemplates.defaultAbsent).slice(0, 50)}…</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="settings-row" onclick="Settings.openTemplateEditor('overdue')">
+          <div class="settings-icon">💰</div>
+          <div class="settings-body">
+            <div class="settings-title">قالب تذكير المدفوعات</div>
+            <div class="settings-desc">${(settings.overdueTemplate || WhatsAppTemplates.defaultOverdue).slice(0, 50)}…</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="settings-row" onclick="Settings.openTemplateEditor('report')">
+          <div class="settings-icon">📊</div>
+          <div class="settings-body">
+            <div class="settings-title">قالب تقرير الطالب</div>
+            <div class="settings-desc">${(settings.reportTemplate || WhatsAppTemplates.defaultReport).slice(0, 50)}…</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); padding: 0 var(--space-3); margin-top: var(--space-2);">
+          المتغيرات المتاحة: {studentName}، {groupName}، {date}، {lessonTopic}، {teacherName}، {amount}، {dueDate}، {remaining}، {attendance}، {examAvg}، {homeworkDone}
+        </p>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">الذكاء الاصطناعي</h2>
+        <div class="settings-row" onclick="Settings.openAIConfig()">
+          <div class="settings-icon">✨</div>
+          <div class="settings-body">
+            <div class="settings-title">مزوّد الذكاء الاصطناعي</div>
+            <div class="settings-desc">${
+              settings.aiProvider === 'openai' ? 'OpenAI (مُفعّل)' :
+              settings.aiProvider === 'zai' ? 'ZAI (مُفعّل)' :
+              settings.aiProvider === 'custom' ? 'مزوّد مخصص (مُفعّل)' :
+              'غير مُفعّل — وضع يدوي'
+            }</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); padding: 0 var(--space-3); margin-top: var(--space-2);">
+          في وضع "غير مُفعّل"، يفتح مولّد الاختبارات محرّر أسئلة يدوي كامل. لا يتم إرسال أي بيانات لمزوّد خارجي ما لم تُفعّل ذلك بنفسك.
+        </p>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">تفضيلات الإشعارات</h2>
+        ${[
+          { key: 'notifLessons', label: 'تذكير بالحصص القادمة', default: true },
+          { key: 'notifAttendance', label: 'تذكير بتسجيل الحضور', default: true },
+          { key: 'notifAbsence', label: 'تنبيه غياب الطلاب', default: true },
+          { key: 'notifPaymentDue', label: 'تنبيه استحقاق المدفوعات', default: true },
+          { key: 'notifOverdue', label: 'تنبيه المدفوعات المتأخرة', default: true },
+          { key: 'notifHomework', label: 'تذكير بمواعيد الواجبات', default: true },
+          { key: 'notifExams', label: 'تنبيه الاختبارات القادمة', default: true },
+          { key: 'notifPerformance', label: 'طلاب يحتاجون مراجعة الأداء', default: false }
+        ].map(item => `
+          <div class="settings-row">
+            <div class="settings-body">
+              <div class="settings-title">${item.label}</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" class="notif-pref" data-key="${item.key}" ${(settings[item.key] === undefined ? item.default : settings[item.key]) ? 'checked' : ''}>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        `).join('')}
+        <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); padding: 0 var(--space-3); margin-top: var(--space-2);">
+          الإشعارات تظهر داخل التطبيق فقط. لا تُرسل إشعارات Push خارج المتصفح ما لم يُسمح بذلك صراحةً من المتصفح.
+        </p>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title" style="margin-bottom: var(--space-3);">أدوات متقدمة</h2>
+        <div class="settings-row" onclick="DailyReport.openDaily()">
+          <div class="settings-icon">📅</div>
+          <div class="settings-body">
+            <div class="settings-title">التقرير اليومي الشامل</div>
+            <div class="settings-desc">إحصائيات اليوم + تنبيهات الطلاب</div>
+          </div>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="settings-row" onclick="ExamScan.openScanner()">
+          <div class="settings-icon">📷</div>
+          <div class="settings-body">
+            <div class="settings-title">مسح ورقة اختبار بالكاميرا</div>
+            <div class="settings-desc">OCR محلي + تقييم بموافقة المدرس</div>
           </div>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);"><path d="m9 18 6-6-6-6"/></svg>
         </div>
@@ -139,8 +225,8 @@ const Settings = {
         <div class="settings-row" onclick="Settings.changePIN()">
           <div class="settings-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <div class="settings-body">
-            <div class="settings-title">${teacher.authMethod === 'email' ? 'تغيير كلمة المرور' : 'تغيير رمز المرور (PIN)'}</div>
-            <div class="settings-desc">${teacher.authMethod === 'email' ? 'كلمة مرور الدخول للبريد' : 'رمز الدخول للتطبيق'}</div>
+            <div class="settings-title">تغيير رمز المرور (PIN)</div>
+            <div class="settings-desc">رمز الدخول للتطبيق</div>
           </div>
         </div>
         <div class="settings-row" onclick="Settings.logout()">
@@ -154,7 +240,7 @@ const Settings = {
 
       <div class="section" style="text-align: center; padding: var(--space-4) 0; color: var(--text-tertiary); font-size: var(--font-size-xs);">
         <p style="font-weight: 700; color: var(--text-secondary);">مُعلّمي | Moallemy</p>
-        <p>الإصدار 1.0.0</p>
+        <p>الإصدار 2.0.0</p>
         <p style="margin-top: 4px;">صُنع بشغف للمدرسين في مصر 🌿</p>
 <p style="margin-top: 10px;">
   <a
@@ -186,35 +272,161 @@ const Settings = {
     document.getElementById('theme-toggle')?.addEventListener('change', (e) => {
       this.applyTheme(e.target.checked ? 'dark' : 'light');
     });
+    // ===== Notification preference toggles =====
+    document.querySelectorAll('.notif-pref').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const key = inp.dataset.key;
+        const settings = Storage.get(Storage.KEYS.settings, {});
+        settings[key] = inp.checked;
+        Storage.set(Storage.KEYS.settings, settings);
+        UI.toast('تم حفظ التفضيل', 'success', 1200);
+      });
+    });
   },
 
-  cloudStatusText() {
-    if (!(window.Cloud && window.SupabaseConfig)) return 'غير متاحة';
-    const s = Cloud.status();
-    if (s.demo) return 'الوضع التجريبي لا يُزامن';
-    if (!s.ready) return 'غير متاحة — تحقق من الاتصال';
-    if (!s.authed) return 'سجّل الدخول للتفعيل';
-    if (!s.online) return 'غير متصل — سيُرفع تلقائيًا';
-    if (s.pending > 0) return `جارٍ الرفع (${s.pending} تغيير)...`;
-    const last = s.lastSync ? ' — آخر مزامنة ' + UI.relativeTime(s.lastSync) : '';
-    return 'مُتصل وكل البيانات محفوظة' + last;
+  // ===== WhatsApp template editor =====
+  openTemplateEditor(type) {
+    const settings = Storage.get(Storage.KEYS.settings, {});
+    const defaults = {
+      absent: { title: 'قالب غياب الطالب', default: WhatsAppTemplates.defaultAbsent, key: 'absentTemplate' },
+      overdue: { title: 'قالب تذكير المدفوعات', default: WhatsAppTemplates.defaultOverdue, key: 'overdueTemplate' },
+      report: { title: 'قالب تقرير الطالب', default: WhatsAppTemplates.defaultReport, key: 'reportTemplate' }
+    };
+    const config = defaults[type];
+    if (!config) return;
+    const current = settings[config.key] || config.default;
+
+    UI.modal({
+      title: config.title,
+      size: 'large',
+      body: `
+        <div class="alert alert-info" style="margin-bottom: var(--space-3);">
+          <div class="alert-icon">ℹ️</div>
+          <div class="alert-body" style="font-size: var(--font-size-sm);">
+            استخدم المتغيرات بين أقواس معقوفة لاستبدالها تلقائيًا عند الإرسال:
+            <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{studentName}</code>
+            <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{date}</code>
+            <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{groupName}</code>
+            ${type === 'absent' ? '<code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{lessonTopic}</code>' : ''}
+            ${type === 'overdue' ? '<code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{amount}</code> <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{dueDate}</code> <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{remaining}</code>' : ''}
+            ${type === 'report' ? '<code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{attendance}</code> <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{examAvg}</code> <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{homeworkDone}</code>' : ''}
+            <code style="background: var(--color-surface-2); padding: 2px 6px; border-radius: 4px;">{teacherName}</code>
+            <br><br>
+            الأسطر التي تحتوي على متغير فارغ (مثل "الدرس:" بدون قيمة) تُحذف تلقائيًا.
+          </div>
+        </div>
+
+        <div class="field">
+          <label>نص القالب</label>
+          <textarea id="template-text" rows="10" style="font-family: 'Cairo', sans-serif; line-height: 1.7;">${(current || '').replace(/</g, '&lt;')}</textarea>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-secondary" onclick="Settings.resetTemplate('${type}')" style="flex:1">استعادة الافتراضي</button>
+          <button class="btn btn-outline" onclick="UI.closeModal()" style="flex:1">إلغاء</button>
+          <button class="btn btn-primary" onclick="Settings.saveTemplate('${type}')" style="flex:1">حفظ</button>
+        </div>
+      `
+    });
   },
 
-  syncNow() {
-    if (!(window.Cloud && window.SupabaseConfig) || !SupabaseConfig.isReady()) {
-      UI.toast('المزامنة غير متاحة حاليًا', 'warning');
-      return;
-    }
-    const s = Cloud.status();
-    if (s.demo || !s.authed) {
-      UI.toast('سجّل الدخول بحسابك لتفعيل المزامنة', 'info');
-      return;
-    }
-    UI.toast('جارٍ المزامنة...', 'info', 1500);
-    Cloud.pull(true).then(() => Cloud.flush()).then(() => {
-      const st = Cloud.status();
-      if (st.pending > 0) UI.toast('لم تكتمل المزامنة — ستعيد المحاولة تلقائيًا', 'warning');
-      else UI.toast('تمت المزامنة بنجاح', 'success');
+  saveTemplate(type) {
+    const text = document.getElementById('template-text').value;
+    const settings = Storage.get(Storage.KEYS.settings, {});
+    const keyMap = { absent: 'absentTemplate', overdue: 'overdueTemplate', report: 'reportTemplate' };
+    settings[keyMap[type]] = text;
+    Storage.set(Storage.KEYS.settings, settings);
+    UI.toast('تم حفظ القالب ✓', 'success');
+    UI.closeModal();
+    App.navigate('settings');
+  },
+
+  resetTemplate(type) {
+    const defaults = {
+      absent: WhatsAppTemplates.defaultAbsent,
+      overdue: WhatsAppTemplates.defaultOverdue,
+      report: WhatsAppTemplates.defaultReport
+    };
+    document.getElementById('template-text').value = defaults[type] || '';
+    UI.toast('تم استعادة الافتراضي', 'info', 1500);
+  },
+
+  // ===== AI provider configuration =====
+  openAIConfig() {
+    const settings = Storage.get(Storage.KEYS.settings, {});
+
+    UI.modal({
+      title: 'إعداد مزوّد الذكاء الاصطناعي',
+      size: 'large',
+      body: `
+        <div class="alert alert-warning" style="margin-bottom: var(--space-3);">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body" style="font-size: var(--font-size-sm);">
+            <strong>خصوصية بياناتك:</strong>
+            عند تفعيل مزوّد الذكاء الاصطناعي، يتم إرسال نص الدرس الذي تُدخله إلى المزوّد لتوليد الأسئلة.
+            لا يتم إرسال صور الطلاب أو بياناتهم الشخصية. المفتاح يُخزَّن محليًا في متصفحك فقط.
+          </div>
+        </div>
+
+        <form id="ai-config-form">
+          <div class="field">
+            <label>المزوّد</label>
+            <select name="aiProvider" id="ai-provider-select">
+              <option value="none" ${settings.aiProvider === 'none' || !settings.aiProvider ? 'selected' : ''}>غير مُفعّل (وضع يدوي)</option>
+              <option value="openai" ${settings.aiProvider === 'openai' ? 'selected' : ''}>OpenAI</option>
+              <option value="zai" ${settings.aiProvider === 'zai' ? 'selected' : ''}>ZAI (z.ai)</option>
+              <option value="custom" ${settings.aiProvider === 'custom' ? 'selected' : ''}>مزوّد مخصص (متوافق مع OpenAI API)</option>
+            </select>
+            <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: 4px;">عند اختيار "غير مُفعّل"، يفتح المولّد محرّر أسئلة يدوي كامل.</p>
+          </div>
+
+          <div class="field">
+            <label>المفتاح (API Key)</label>
+            <input type="password" name="aiApiKey" value="${settings.aiApiKey || ''}" placeholder="sk-..." autocomplete="off">
+            <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: 4px;">يُخزَّن محليًا في متصفحك فقط — لا يُرسل لأي خادم آخر.</p>
+          </div>
+
+          <div class="field">
+            <label>عنوان الـ API (Endpoint)</label>
+            <input type="url" name="aiEndpoint" value="${settings.aiEndpoint || 'https://api.openai.com/v1/chat/completions'}" placeholder="https://api.openai.com/v1/chat/completions">
+            <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: 4px;">
+              القيم الافتراضية:
+              <br>• OpenAI: https://api.openai.com/v1/chat/completions
+              <br>• ZAI: https://api.z.ai/api/paas/v4/chat/completions
+            </p>
+          </div>
+
+          <div class="field">
+            <label>اسم النموذج (Model)</label>
+            <input type="text" name="aiModel" value="${settings.aiModel || ''}" placeholder="gpt-4o-mini / glm-4-flash">
+          </div>
+
+          <div class="alert alert-info" style="margin: var(--space-3) 0;">
+            <div class="alert-icon">💡</div>
+            <div class="alert-body" style="font-size: var(--font-size-sm);">
+              <strong>توصية:</strong> جرّب "وضع يدوي" أولًا — المحرّر اليدوي كامل وفعّال بدون أي تكلفة أو إعداد.
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button type="button" class="btn btn-secondary" onclick="UI.closeModal()" style="flex:1">إلغاء</button>
+            <button type="submit" class="btn btn-primary" style="flex:1">حفظ الإعداد</button>
+          </div>
+        </form>
+      `
+    });
+
+    document.getElementById('ai-config-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      const settings = Storage.get(Storage.KEYS.settings, {});
+      settings.aiProvider = data.aiProvider || 'none';
+      settings.aiApiKey = data.aiApiKey || '';
+      settings.aiEndpoint = data.aiEndpoint || '';
+      settings.aiModel = data.aiModel || '';
+      Storage.set(Storage.KEYS.settings, settings);
+      UI.toast('تم حفظ إعدادات الذكاء الاصطناعي ✓', 'success');
+      UI.closeModal();
       App.navigate('settings');
     });
   },
@@ -384,73 +596,46 @@ const Settings = {
   },
 
   changePIN() {
-    const t = Auth.getTeacher() || {};
-    const isEmail = t.authMethod === 'email';
-    const title = isEmail ? 'تغيير كلمة المرور' : 'تغيير رمز المرور';
-    const curLabel = isEmail ? 'كلمة المرور الحالية' : 'الرمز الحالي';
-    const newLabel = isEmail ? 'كلمة المرور الجديدة' : 'الرمز الجديد';
-    const confLabel = isEmail ? 'تأكيد كلمة المرور الجديدة' : 'تأكيد الرمز الجديد';
-    const minLen = isEmail ? 6 : 4;
-    const inputAttrs = isEmail
-      ? 'autocomplete="current-password"'
-      : 'inputmode="numeric" maxlength="6"';
-    const newInputAttrs = isEmail
-      ? 'autocomplete="new-password"'
-      : 'inputmode="numeric" maxlength="6"';
     UI.modal({
-      title,
+      title: 'تغيير رمز المرور',
       body: `
         <form id="pin-form">
           <div class="field">
-            <label>${curLabel}</label>
-            <input type="password" name="current" ${inputAttrs} required>
+            <label>الرمز الحالي</label>
+            <input type="password" name="current" inputmode="numeric" maxlength="6" required>
           </div>
           <div class="field">
-            <label>${newLabel}</label>
-            <input type="password" name="new" ${newInputAttrs} required minlength="${minLen}">
+            <label>الرمز الجديد</label>
+            <input type="password" name="new" inputmode="numeric" maxlength="6" required min="4">
           </div>
           <div class="field">
-            <label>${confLabel}</label>
-            <input type="password" name="confirm" ${newInputAttrs} required>
+            <label>تأكيد الرمز الجديد</label>
+            <input type="password" name="confirm" inputmode="numeric" maxlength="6" required>
           </div>
-          <button type="submit" class="btn btn-primary btn-block">${isEmail ? 'تغيير كلمة المرور' : 'تغيير الرمز'}</button>
+          <button type="submit" class="btn btn-primary btn-block">تغيير الرمز</button>
         </form>
       `
     });
-    document.getElementById('pin-form').addEventListener('submit', async (e) => {
+    document.getElementById('pin-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
-      if (data.new.length < minLen) {
-        UI.toast(isEmail
-          ? 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل'
-          : 'الرمز الجديد يجب أن يكون 4 أرقام على الأقل', 'error');
+      const teacher = Auth.getTeacher();
+      if (data.current !== teacher.pin) {
+        UI.toast('الرمز الحالي غير صحيح', 'error');
+        return;
+      }
+      if (data.new.length < 4) {
+        UI.toast('الرمز الجديد يجب أن يكون 4 أرقام على الأقل', 'error');
         return;
       }
       if (data.new !== data.confirm) {
-        UI.toast(isEmail ? 'كلمتا المرور غير متطابقتين' : 'الرمزان غير متطابقين', 'error');
+        UI.toast('الرمزان غير متطابقين', 'error');
         return;
       }
-      if (!(window.SupabaseConfig && SupabaseConfig.isReady()) || Storage.isDemoMode()) {
-        UI.toast('التغيير يتطلب الاتصال بالإنترنت وحسابًا حقيقيًا', 'warning');
-        return;
-      }
-      setLoading(true);
-      const res = await Auth.changePIN(data.current, data.new);
-      setLoading(false);
-      if (!res.ok) {
-        UI.toast(res.message || 'تعذر التغيير', 'error');
-        return;
-      }
-      UI.toast(isEmail ? 'تم تغيير كلمة المرور بنجاح' : 'تم تغيير رمز المرور بنجاح', 'success');
+      Auth.updateTeacher({ pin: data.new });
+      UI.toast('تم تغيير رمز المرور بنجاح', 'success');
       UI.closeModal();
     });
-
-    function setLoading(on) {
-      const btn = document.querySelector('#pin-form button[type="submit"]');
-      if (!btn) return;
-      btn.disabled = on;
-      btn.textContent = on ? 'جارٍ التغيير...' : (isEmail ? 'تغيير كلمة المرور' : 'تغيير الرمز');
-    }
   },
 
   exportData(format = 'json') {
@@ -512,14 +697,8 @@ const Settings = {
   },
 
   confirmClearAll() {
-    UI.confirm('سيتم مسح جميع الطلاب والمجموعات والحصص والمدفوعات نهائيًا من جهازك ومن السحابة. لا يمكن التراجع. ننصح بتصدير نسخة احتياطية أولًا.', async () => {
-      UI.confirm('تأكيد أخير: مسح كل البيانات؟', async () => {
-        // امسح من السحابة أولًا (خصوصًا إذا كان الحساب مُزامنًا)
-        if (window.Cloud && Cloud.isAuthed()) {
-          const wiped = await Cloud.wipeCloudData();
-          if (!wiped) UI.toast('تعذر مسح البيانات السحابية — أعد المحاولة', 'warning');
-        }
-        Cloud.suspend();
+    UI.confirm('سيتم مسح جميع الطلاب والمجموعات والحصص والمدفوعات نهائيًا. لا يمكن التراجع. ننصح بتصدير نسخة احتياطية أولًا.', () => {
+      UI.confirm('تأكيد أخير: مسح كل البيانات؟', () => {
         Storage.clearAll();
         Storage.setDemoMode(false);
         UI.toast('تم مسح جميع البيانات', 'success');

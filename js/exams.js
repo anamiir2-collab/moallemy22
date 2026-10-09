@@ -9,8 +9,6 @@ const Exams = {
     const today = new Date().toISOString().slice(0, 10);
     const upcoming = exams.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
     const past = exams.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-    // الامتحانات المولدة بالذكاء الاصطناعي — مخزنة منفصلة ولا تلمس الاختبارات العادية
-    const aiExams = Storage.list(Storage.KEYS.aiExams || 'ai_exams');
 
     return `
       <div class="page-header">
@@ -19,21 +17,22 @@ const Exams = {
             <h1 class="page-title">الاختبارات</h1>
             <p class="page-subtitle">${exams.length} اختبار</p>
           </div>
-          <button class="btn btn-primary" onclick="Exams.openAddForm()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            اختبار
-          </button>
+          <div style="display:flex; gap: 6px;">
+            <button class="btn btn-outline" onclick="AIExam.openGenerator()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              مولّد
+            </button>
+            <button class="btn btn-primary" onclick="Exams.openAddForm()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              اختبار
+            </button>
+          </div>
         </div>
       </div>
-
-      <button class="btn btn-gold btn-block" onclick="AIGenerator.openGenerator()" style="margin-bottom: var(--space-4);">
-        ✨ توليد امتحان بالذكاء الاصطناعي
-      </button>
 
       <div class="tabs" id="exams-tabs">
         <button class="tab active" data-tab="upcoming">القادمة (${upcoming.length})</button>
         <button class="tab" data-tab="past">السابقة (${past.length})</button>
-        <button class="tab" data-tab="ai">الذكاء الاصطناعي (${aiExams.length})</button>
       </div>
 
       <div id="exams-tab-content">
@@ -52,15 +51,7 @@ const Exams = {
         const exams = Storage.list(Storage.KEYS.exams);
         let list = [];
         if (t === 'upcoming') list = exams.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-        else if (t === 'past') list = exams.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-        else if (t === 'ai') {
-          // تبويب الامتحانات المولدة بالذكاء الاصطناعي (مخزن منفصل)
-          document.getElementById('exams-tab-content').innerHTML = window.AIGenerator
-            ? AIGenerator.renderSavedTab()
-            : UI.emptyState('✨', 'غير متاح', 'لم يتم تحميل وحدة الذكاء الاصطناعي.');
-          if (window.AIGenerator) AIGenerator.bindSavedTab();
-          return;
-        }
+        else list = exams.filter(e => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
         document.getElementById('exams-tab-content').innerHTML = this.renderList(list, 'لا توجد اختبارات', '');
         this.bindListEvents();
       });
@@ -136,7 +127,6 @@ const Exams = {
             <label>الدرس / الوحدة</label>
             <input type="text" name="topic" placeholder="مثال: الوحدة الأولى - الجبر">
           </div>
-          ${window.CurriculumUI ? CurriculumUI.examCurriculumSection() : ''}
           <div class="field">
             <label>ملاحظات</label>
             <textarea name="notes" placeholder="ملاحظات..."></textarea>
@@ -157,26 +147,12 @@ const Exams = {
       }
     });
 
-    // ربط الامتحان بالمنهج الرسمي (اختياري — وحدة المناهج)
-    const curExamLink = (window.CurriculumUI && document.getElementById('cur-exam-link-btn')) ? CurriculumUI.bindExamCurriculum() : null;
-
     document.getElementById('add-exam-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       const group = Storage.find(Storage.KEYS.groups, data.groupId);
       data.subject = group ? group.subject : '';
       data.maxGrade = parseFloat(data.maxGrade) || 20;
-      // حفظ مرجع المنهج مع الامتحان (الصف/المادة/الترم/الكتاب/الوحدة/الدروس)
-      if (curExamLink && curExamLink.getRef()) {
-        const r = curExamLink.getRef();
-        data.curriculum = CurriculumData.reference(r);
-        data.curriculum.unitId = r.unitId || '';
-        data.curriculumLessonIds = r.lessonIds || [];
-        if (!data.topic && r.lessonIds && r.lessonIds.length) {
-          const ls = r.lessonIds.map(id => (CurriculumData.lesson(id) || {}).title).filter(Boolean);
-          if (ls.length) data.topic = ls.join('، ');
-        }
-      }
       Storage.insert(Storage.KEYS.exams, data);
       UI.toast('تمت إضافة الاختبار بنجاح', 'success');
       UI.closeModal();
@@ -207,13 +183,6 @@ const Exams = {
             ${exam.topic ? `<div style="display:flex; justify-content:space-between;"><span style="color:var(--text-tertiary);">الموضوع</span><span>${exam.topic}</span></div>` : ''}
           </div>
         </div>
-
-        ${exam.curriculum && window.CurriculumUI ? `
-          <div class="cur-ref-chip" style="margin-bottom: var(--space-4);">
-            ${Icons.get('book', 14)}
-            <span>مرتبط بالمنهج الرسمي: ${esc(CurriculumUI.refLabel(exam.curriculum))}${exam.curriculumLessonIds && exam.curriculumLessonIds.length > 1 ? `<br>عدد الدروس: ${exam.curriculumLessonIds.length}` : ''}<br><small style="font-weight:400;">المصدر: ${esc(exam.curriculum.source || 'وزارة التربية والتعليم')}</small></span>
-          </div>
-        ` : ''}
 
         ${grades.length > 0 ? `
           <div class="stats-grid" style="margin-bottom: var(--space-4);">

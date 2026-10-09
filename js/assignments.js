@@ -324,7 +324,6 @@ ${group.name}
             <label>الدرس / الوحدة</label>
             <input type="text" name="topic" placeholder="مثال: الفصل الأول">
           </div>
-          ${window.CurriculumUI ? CurriculumUI.assignmentSourceSection() : ''}
           <div class="field-row">
             <div class="field">
               <label>تاريخ التكليف</label>
@@ -404,27 +403,10 @@ groupSelect.addEventListener('change', updateDueDate);
 // تشغيل الحساب أول ما تفتح نافذة إضافة الواجب
 updateDueDate();
 
-// مصدر الواجب: منهج الوزارة / درس مخصص / محتوى المدرس (وحدة المناهج)
-const curAssignSrc = (window.CurriculumUI && document.getElementById('cur-assign-source')) ? CurriculumUI.bindAssignmentSource() : null;
-
     document.getElementById('add-assignment-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       data.maxGrade = parseFloat(data.maxGrade) || 10;
-      // حفظ مصدر الواجب ومرجع المنهج إن اختير
-      if (curAssignSrc && curAssignSrc.getRef()) {
-        const r = curAssignSrc.getRef();
-        data.source = 'منهج الوزارة';
-        data.curriculum = CurriculumData.reference(r);
-        data.curriculum.lessonId = (r.lessonIds && r.lessonIds[0]) || '';
-        data.curriculum.unitId = r.unitId || '';
-        if (r.lessonIds && r.lessonIds.length && !data.topic) {
-          const ls = r.lessonIds.map(id => (CurriculumData.lesson(id) || {}).title).filter(Boolean);
-          if (ls.length) data.topic = ls.join('، ');
-        }
-      } else {
-        data.source = data.source || 'محتوى المدرس';
-      }
       const newAssignment = Storage.insert(Storage.KEYS.assignments, data);
 
       // Create submissions for all active students in the group
@@ -468,13 +450,6 @@ const curAssignSrc = (window.CurriculumUI && document.getElementById('cur-assign
         <div class="card" style="margin-bottom: var(--space-3);">
           <h3 style="font-weight:700;margin-bottom:8px;">${a.name}</h3>
           ${a.description ? `<p style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: 8px;">${a.description}</p>` : ''}
-          ${a.source === 'منهج الوزارة' ? '<span class="badge badge-info">📚 منهج الوزارة</span>' : ''}
-          ${a.curriculum && window.CurriculumUI ? `
-            <div class="cur-ref-chip" style="margin: 8px 0;">
-              ${Icons.get('book', 14)}
-              <span>${esc(CurriculumUI.refLabel(a.curriculum))}</span>
-            </div>
-          ` : ''}
           <div style="display:grid; gap:6px; font-size: var(--font-size-sm);">
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-tertiary);">المجموعة</span><span>${group ? group.name : '—'}</span></div>
             <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-tertiary);">التكليف</span><span>${UI.formatDate(a.assignedDate)}</span></div>

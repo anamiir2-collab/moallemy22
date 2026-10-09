@@ -167,7 +167,6 @@ const Lessons = {
             <label>موضوع الدرس</label>
             <input type="text" name="topic" placeholder="مثال: الفصل الأول - الجبر">
           </div>
-          ${window.CurriculumUI ? CurriculumUI.lessonLinkSection() : ''}
           <div class="field">
             <label>ملاحظات</label>
             <textarea name="notes" placeholder="ملاحظات..."></textarea>
@@ -192,9 +191,6 @@ const Lessons = {
     // Trigger for pre-selected group
     if (groupId) document.querySelector('[name="groupId"]').dispatchEvent(new Event('change'));
 
-    // ربط الحصة بالمنهج الرسمي (اختياري — وحدة المناهج)
-    const curLink = (window.CurriculumUI && document.getElementById('cur-lesson-link-btn')) ? CurriculumUI.bindLessonLink() : null;
-
     document.getElementById('add-lesson-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -206,13 +202,6 @@ const Lessons = {
       end.setMinutes(end.getMinutes() + data.duration);
       data.endTime = end.toTimeString().slice(0, 5);
       if (!data.location && g) data.location = g.location;
-      // حفظ مرجع المنهج مع الحصة
-      if (curLink && curLink.getRef()) {
-        const r = curLink.getRef();
-        data.curriculum = CurriculumData.reference(r);
-        data.curriculum.lessonId = (r.lessonIds && r.lessonIds[0]) || '';
-        data.curriculum.unitId = r.unitId || '';
-      }
       Storage.insert(Storage.KEYS.lessons, data);
       UI.toast('تمت إضافة الحصة بنجاح', 'success');
       UI.closeModal();
@@ -227,6 +216,11 @@ const Lessons = {
     const students = Storage.list(Storage.KEYS.students, s => s.groupId === lesson.groupId && s.status === 'نشط');
     const existingAtt = Storage.list(Storage.KEYS.attendance, a => a.lessonId === lessonId);
 
+    // ===== Duplicate attendance safeguard =====
+    const hasExistingAtt = existingAtt.length > 0;
+
+    const voiceSupported = VoiceAttendance.isSupported();
+
     UI.modal({
       title: 'بدء الحصة وتسجيل الحضور',
       body: `
@@ -235,6 +229,16 @@ const Lessons = {
           <p style="color:rgba(255,255,255,0.9);font-size:var(--font-size-sm);">${UI.formatDate(lesson.date, { weekday: true })} • ${UI.formatTime(lesson.startTime)}</p>
           <p style="color:rgba(255,255,255,0.7);font-size:var(--font-size-xs);margin-top:6px;">${students.length} طالب • ${lesson.location || ''}</p>
         </div>
+
+        ${hasExistingAtt ? `
+          <div class="alert alert-warning" style="margin-bottom: var(--space-3);">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-body">
+              <strong>يوجد سجل حضور لهذه الحصة</strong>
+              تم تسجيل حضور ${existingAtt.length} طالب مسبقًا. التعديلات ستستبدل السجل الحالي بعد الحفظ.
+            </div>
+          </div>
+        ` : ''}
 
         <div class="field">
           <label>موضوع الدرس</label>
@@ -248,15 +252,45 @@ const Lessons = {
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin: var(--space-4) 0 var(--space-3);">
           <h4 style="font-weight:700;">الحضور (${students.length})</h4>
-          <button class="btn btn-text btn-sm" id="mark-all-present">تحديد الكل حاضر</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-text btn-sm" id="mark-all-present">تحديد الكل حاضر</button>
+          </div>
         </div>
+
+        ${voiceSupported && students.length > 0 ? `
+          <div class="voice-attendance-panel" id="voice-panel">
+            <div style="display:flex; align-items:center; gap: var(--space-3);">
+              <button type="button" class="mic-btn" id="voice-mic-btn" aria-label="تسجيل صوتي">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              </button>
+              <div style="flex:1; min-width:0;">
+                <div style="font-weight:700; font-size: var(--font-size-sm);">الحضور بالصوت</div>
+                <div style="color: var(--text-tertiary); font-size: var(--font-size-xs); margin-top:2px;">مثال: «أحمد وسعيد غايبين» أو «كل الطلاب حضروا ما عدا محمد»</div>
+                <div id="voice-transcript" style="margin-top:6px; font-size: var(--font-size-sm); color: var(--text-secondary); min-height: 1.4em;"></div>
+              </div>
+            </div>
+            <div id="voice-matched" style="margin-top: var(--space-3);"></div>
+          </div>
+        ` : (students.length > 0 ? `
+          <div class="alert alert-info" style="margin-bottom: var(--space-3);">
+            <div class="alert-icon">ℹ️</div>
+            <div class="alert-body" style="font-size: var(--font-size-sm);">
+              التعرّف الصوتي غير مدعوم على هذا المتصفح. استخدم الأزرار لتسجيل الحضور يدويًا. (موصى به: Chrome / Edge على Android)
+            </div>
+          </div>
+        ` : '')}
 
         ${students.length === 0 ? UI.emptyState('👥', 'لا يوجد طلاب', 'لا توجد طلاب نشطين في هذه المجموعة.') : `
           <div id="attendance-list" style="display:flex; flex-direction:column; gap: var(--space-2); margin-bottom: var(--space-4);">
             ${students.map(s => {
               const ex = existingAtt.find(a => a.studentId === s.id);
               return `
-                <div class="card" style="padding: var(--space-3); display:flex; align-items:center; gap: var(--space-3);">
+                <div class="card" style="padding: var(--space-3); display:flex; align-items:center; gap: var(--space-3);" data-att-row="${s.id}">
                   <div class="avatar avatar-sm">${UI.initials(s.name)}</div>
                   <div style="flex:1; min-width:0;">
                     <div style="font-weight:600;font-size:var(--font-size-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</div>
@@ -287,6 +321,16 @@ const Lessons = {
     // Bind attendance buttons
     const attState = {};
     existingAtt.forEach(a => attState[a.studentId] = a.status);
+
+    function syncAttUI() {
+      document.querySelectorAll('[data-att-group]').forEach(g => {
+        const sid = g.dataset.attGroup;
+        g.querySelectorAll('button').forEach(b => {
+          b.classList.toggle('active', b.dataset.status === attState[sid]);
+        });
+      });
+    }
+
     document.querySelectorAll('[data-att-group]').forEach(group => {
       group.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -302,42 +346,282 @@ const Lessons = {
       students.forEach(s => {
         attState[s.id] = 'حاضر';
       });
-      document.querySelectorAll('[data-att-group]').forEach(group => {
-        group.querySelectorAll('button').forEach(b => {
-          b.classList.toggle('active', b.dataset.status === 'حاضر');
-        });
-      });
+      syncAttUI();
       UI.toast('تم تحديد الكل حاضر', 'success', 1500);
     });
+
+    // ===== Voice attendance =====
+    let activeRec = null;
+    const micBtn = document.getElementById('voice-mic-btn');
+    const transcriptEl = document.getElementById('voice-transcript');
+    const matchedEl = document.getElementById('voice-matched');
+
+    function applyVoiceResult(transcript) {
+      if (!transcript) return;
+      transcriptEl.textContent = '“' + transcript + '”';
+      const intent = VoiceAttendance.detectIntent(transcript, students);
+      const result = VoiceAttendance.applyIntent(intent, students, attState);
+      Object.assign(attState, result.newState);
+      syncAttUI();
+
+      // Detect ambiguous matches: multiple students matched the same token
+      const ambiguousIds = new Set();
+      const tokenToMatches = {};
+      result.matched.forEach(m => {
+        if (!tokenToMatches[m.matchedToken]) tokenToMatches[m.matchedToken] = [];
+        tokenToMatches[m.matchedToken].push(m.student.id);
+      });
+      Object.entries(tokenToMatches).forEach(([tok, ids]) => {
+        if (ids.length > 1) ids.forEach(id => ambiguousIds.add(id));
+      });
+
+      // Show matched students + ambiguous-match handling
+      if (result.matched && result.matched.length > 0) {
+        const modeLabel = {
+          mark_absent: 'غائب',
+          mark_late: 'متأخر',
+          mark_present: 'حاضر',
+          except: 'غائب (ما عدا)'
+        }[result.mode] || '';
+        matchedEl.innerHTML = `
+          <div class="alert alert-success" style="margin-top:6px;">
+            <div class="alert-icon">✓</div>
+            <div class="alert-body">
+              <strong>تم تحديد ${result.matched.length} طالب</strong>${modeLabel ? ' — الحالة: ' + modeLabel : ''}
+              ${ambiguousIds.size > 0 ? `
+                <div class="alert alert-warning" style="margin-top: 6px; background: var(--color-warning-soft);">
+                  <strong>⚠️ يوجد تطابق متعدد</strong> — "${[...Object.keys(tokenToMatches)].filter(t => tokenToMatches[t].length > 1).join('، ')}" يطابق أكثر من طالب. راجع القائمة يدويًا.
+                </div>
+              ` : ''}
+              <ul style="margin: 6px 0 0; padding-inline-start: 18px; font-size: var(--font-size-sm);">
+                ${result.matched.map(m => `
+                  <li>
+                    ${m.student.name}
+                    ${m.confidence < 0.9 ? '<span class="badge badge-warning" style="margin-inline-start:6px;">تطابق تقريبي — راجع</span>' : ''}
+                    ${ambiguousIds.has(m.student.id) ? '<span class="badge badge-warning" style="margin-inline-start:6px;">تطابق متعدد — راجع</span>' : ''}
+                  </li>
+                `).join('')}
+              </ul>
+              <p style="margin-top:6px; color: var(--text-tertiary); font-size: var(--font-size-xs);">راجع القائمة يدويًا قبل الحفظ.</p>
+            </div>
+          </div>
+        `;
+      } else if (result.mode === 'all_present') {
+        matchedEl.innerHTML = `
+          <div class="alert alert-success" style="margin-top:6px;">
+            <div class="alert-icon">✓</div>
+            <div class="alert-body">تم تحديد كل الطلاب حاضر.</div>
+          </div>
+        `;
+      } else {
+        matchedEl.innerHTML = `
+          <div class="alert alert-warning" style="margin-top:6px;">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-body">لم يتم التعرّف على أسماء الطلاب في الصوت المُلتقط. حاول مرة أخرى بصوت أوضح، أو سجّل يدويًا.</div>
+          </div>
+        `;
+      }
+    }
+
+    if (micBtn) {
+      micBtn.addEventListener('click', () => {
+        if (activeRec) {
+          VoiceAttendance.stopRecognition(activeRec);
+          activeRec = null;
+          micBtn.classList.remove('recording');
+          return;
+        }
+        matchedEl.innerHTML = '';
+        transcriptEl.textContent = '... جارٍ التسجيل';
+        micBtn.classList.add('recording');
+
+        activeRec = VoiceAttendance.startRecognition({
+          onPartial: (text) => {
+            transcriptEl.textContent = '... ' + text;
+          },
+          onFinal: (text) => {
+            if (text) applyVoiceResult(text);
+          },
+          onError: (err) => {
+            micBtn.classList.remove('recording');
+            activeRec = null;
+            if (err.error === 'aborted') return;
+            UI.toast(err.message || 'تعذّر التعرّف الصوتي', 'error', 3500);
+            if (err.error === 'not-allowed') {
+              transcriptEl.innerHTML = '<span style="color: var(--color-danger);">تم رفض إذن الميكروفون. فعّله من إعدادات المتصفح.</span>';
+            }
+          },
+          onEnd: () => {
+            micBtn.classList.remove('recording');
+            activeRec = null;
+            if (transcriptEl.textContent === '... جارٍ التسجيل') {
+              transcriptEl.textContent = 'لم يتم التقاط صوت. حاول مرة أخرى.';
+            }
+          }
+        });
+      });
+    }
 
     // Save
     document.getElementById('save-attendance').addEventListener('click', () => {
       const topic = document.getElementById('lesson-topic').value.trim();
       const notes = document.getElementById('lesson-notes').value.trim();
 
-      // Update lesson
-      Storage.update(Storage.KEYS.lessons, lessonId, { topic, notes, status: 'تمت' });
+      // ===== Duplicate prevention: require explicit confirmation =====
+      const doSave = () => {
+        Storage.update(Storage.KEYS.lessons, lessonId, { topic, notes, status: 'تمت' });
 
-      // Update attendance
-      students.forEach(s => {
-        const status = attState[s.id] || 'حاضر';
-        const existing = existingAtt.find(a => a.studentId === s.id);
-        if (existing) {
-          Storage.update(Storage.KEYS.attendance, existing.id, { status });
+        students.forEach(s => {
+          const status = attState[s.id] || 'حاضر';
+          const existing = existingAtt.find(a => a.studentId === s.id);
+          if (existing) {
+            Storage.update(Storage.KEYS.attendance, existing.id, { status });
+          } else {
+            Storage.insert(Storage.KEYS.attendance, {
+              lessonId,
+              groupId: lesson.groupId,
+              studentId: s.id,
+              date: lesson.date,
+              status
+            });
+          }
+        });
+
+        UI.toast(`تم حفظ حضور ${students.length} طالب ✓`, 'success');
+
+        // ===== Offer WhatsApp messaging for absent students =====
+        const absentStudents = students.filter(s => (attState[s.id] || 'حاضر') === 'غائب');
+        UI.closeModal();
+
+        if (absentStudents.length > 0) {
+          setTimeout(() => Lessons.openAbsentWhatsApp(lessonId, absentStudents), 250);
         } else {
-          Storage.insert(Storage.KEYS.attendance, {
-            lessonId,
-            groupId: lesson.groupId,
-            studentId: s.id,
-            date: lesson.date,
-            status
-          });
+          if (App.currentPage === 'lessons') App.navigate('lessons');
+          else if (App.currentPage === 'dashboard') App.navigate('dashboard');
+        }
+      };
+
+      if (hasExistingAtt) {
+        UI.confirm(
+          `يوجد سجل حضور سابق لهذه الحصة (${existingAtt.length} طالب). سيتم استبداله بالسجل الجديد. متابعة؟`,
+          doSave,
+          { title: 'تأكيد استبدال الحضور', confirmText: 'نعم، استبدل', danger: true }
+        );
+      } else {
+        doSave();
+      }
+    });
+  },
+
+  // ===== WhatsApp messaging for absent students =====
+  openAbsentWhatsApp(lessonId, absentStudents) {
+    const lesson = Storage.find(Storage.KEYS.lessons, lessonId);
+    const group = lesson ? Storage.find(Storage.KEYS.groups, lesson.groupId) : null;
+    const teacher = Auth.getTeacher();
+    const settings = Storage.get(Storage.KEYS.settings, {});
+    const tpl = settings.absentTemplate || WhatsAppTemplates.defaultAbsent;
+
+    const dateStr = lesson ? UI.formatDate(lesson.date, { weekday: true }) : UI.formatDate(new Date().toISOString());
+
+    const built = absentStudents.map(s => {
+      const msg = WhatsAppTemplates.fillAbsent(tpl, {
+        studentName: s.name,
+        groupName: group ? group.name : '',
+        date: dateStr,
+        lessonTopic: lesson && lesson.topic ? lesson.topic : '',
+        teacherName: teacher ? teacher.name : ''
+      });
+      const phoneValid = WhatsAppTemplates.validatePhone(s.parentPhone);
+      return { student: s, msg, phoneValid };
+    });
+
+    const validCount = built.filter(b => b.phoneValid).length;
+    const invalidCount = built.length - validCount;
+
+    UI.modal({
+      title: `تنبيه أولياء الأمور (${absentStudents.length} غائب)`,
+      body: `
+        <div class="alert alert-info" style="margin-bottom: var(--space-3);">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-body" style="font-size: var(--font-size-sm);">
+            تم تسجيل غياب <strong>${absentStudents.length}</strong> طالب.
+            اضغط "فتح واتساب" للطالب لإرسال الرسالة عبر تطبيق واتساب (يجب على المدرس تأكيد الإرسال يدويًا — لا يتم الإرسال تلقائيًا).
+          </div>
+        </div>
+
+        ${invalidCount > 0 ? `
+          <div class="alert alert-warning" style="margin-bottom: var(--space-3);">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-body" style="font-size: var(--font-size-sm);">
+              <strong>${invalidCount}</strong> طالب ليس لديهم رقم هاتف صالح لولي الأمر.
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="list">
+          ${built.map(b => `
+            <div class="card" style="padding: var(--space-3); margin-bottom: var(--space-2);">
+              <div style="display:flex; align-items:center; gap: var(--space-3); margin-bottom: var(--space-2);">
+                <div class="avatar avatar-sm">${UI.initials(b.student.name)}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-weight:700;">${b.student.name}</div>
+                  <div style="font-size: var(--font-size-xs); color: ${b.phoneValid ? 'var(--color-success)' : 'var(--color-danger)'}; direction: ltr; text-align: right;">
+                    ${b.phoneValid ? b.phoneValid.formatted : (b.student.parentPhone || '— لا يوجد رقم —')}
+                  </div>
+                </div>
+                ${b.phoneValid ? '<span class="badge badge-success">صالح</span>' : '<span class="badge badge-danger">غير صالح</span>'}
+              </div>
+              <div style="background: var(--color-surface-2); padding: var(--space-2); border-radius: var(--radius-sm); font-size: var(--font-size-xs); line-height: 1.6; max-height: 110px; overflow-y: auto; white-space: pre-wrap;">${b.msg}</div>
+              <div style="display:flex; gap: 6px; margin-top: var(--space-2);">
+                ${b.phoneValid ? `
+                  <button class="btn btn-primary btn-sm" style="flex:1;" data-wa-open="${b.student.id}">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4 7.94 7.94 0 0 0 5.1 15.94L4 20l4.16-1.09a7.93 7.93 0 0 0 3.79.97h.01a7.94 7.94 0 0 0 5.64-13.55z"/></svg>
+                    فتح واتساب
+                  </button>
+                  <button class="btn btn-secondary btn-sm" data-copy="${b.student.id}">نسخ</button>
+                ` : `
+                  <button class="btn btn-secondary btn-sm" style="flex:1;" data-edit-phone="${b.student.id}">تعديل الرقم</button>
+                `}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <button class="btn btn-text btn-block" style="margin-top: var(--space-3);" id="finish-absent-flow">تم — العودة للرئيسية</button>
+      `
+    });
+
+    // Bind buttons
+    document.querySelectorAll('[data-wa-open]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.waOpen;
+        const item = built.find(b => b.student.id === sid);
+        if (!item || !item.phoneValid) return;
+        WhatsAppTemplates.openWhatsApp(item.phoneValid.international, item.msg);
+      });
+    });
+    document.querySelectorAll('[data-copy]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = btn.dataset.copy;
+        const item = built.find(b => b.student.id === sid);
+        if (!item) return;
+        try {
+          await navigator.clipboard.writeText(item.msg);
+          UI.toast('تم نسخ الرسالة ✓', 'success', 1500);
+        } catch (e) {
+          UI.toast('تعذّر النسخ — اضغط مطوّلًا على النص لنسخه', 'warning');
         }
       });
-
-      UI.toast(`تم حفظ حضور ${students.length} طالب ✓`, 'success');
+    });
+    document.querySelectorAll('[data-edit-phone]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.editPhone;
+        UI.closeModal();
+        setTimeout(() => Students.openProfile(sid, 'parent'), 250);
+      });
+    });
+    document.getElementById('finish-absent-flow')?.addEventListener('click', () => {
       UI.closeModal();
-      // Refresh current view
       if (App.currentPage === 'lessons') App.navigate('lessons');
       else if (App.currentPage === 'dashboard') App.navigate('dashboard');
     });
@@ -366,13 +650,6 @@ const Lessons = {
         </div>
 
         ${l.topic ? `<div class="card" style="margin-bottom: var(--space-3);"><p style="color:var(--text-tertiary);font-size:var(--font-size-xs);">موضوع الدرس</p><p style="margin-top:4px;">${l.topic}</p></div>` : ''}
-
-        ${l.curriculum && window.CurriculumUI ? `
-          <div class="cur-ref-chip" style="margin-bottom: var(--space-3);">
-            ${Icons.get('book', 14)}
-            <span>مرتبط بالمنهج الرسمي: ${esc(CurriculumUI.refLabel(l.curriculum))}<br><small style="font-weight:400;">المصدر: ${esc(l.curriculum.source || 'وزارة التربية والتعليم')}</small></span>
-          </div>
-        ` : ''}
 
         ${att.length > 0 ? `
           <div class="stats-grid" style="margin-bottom: var(--space-3);">

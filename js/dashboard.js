@@ -25,8 +25,9 @@ const Dashboard = {
       { icon: '👤', label: 'إضافة طالب', action: 'add-student', color: '' },
       { icon: '👥', label: 'مجموعة', action: 'add-group', color: 'gold' },
       { icon: '✓', label: 'حضور', action: 'quick-attendance', color: 'success' },
+      { icon: '📅', label: 'تقرير يومي', action: 'daily-report', color: 'info' },
       { icon: '📝', label: 'اختبار', action: 'add-exam', color: 'warning' },
-      { icon: '📋', label: 'واجب', action: 'add-assignment', color: 'info' },
+      { icon: '📷', label: 'مسح اختبار', action: 'exam-scan', color: 'warning' },
       { icon: '💰', label: 'دفعة', action: 'quick-payment', color: 'gold' },
       { icon: '📊', label: 'تقرير', action: 'add-report', color: '' }
     ];
@@ -295,6 +296,8 @@ const Dashboard = {
           case 'quick-payment': Payments.openQuick(); break;
           case 'add-report': Reports.openGenerator(); break;
           case 'add-lesson': Lessons.openAddForm(); break;
+          case 'daily-report': DailyReport.openDaily(); break;
+          case 'exam-scan': ExamScan.openScanner(); break;
         }
       });
     });

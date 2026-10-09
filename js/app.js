@@ -78,8 +78,7 @@ const UI = {
 
   // ===== Empty State =====
   emptyState(icon, title, text, btnLabel, btnAction) {
-    // data-action مطلوب — الصفحات تربط أحداثها على [data-action="..."]
-    const btn = btnLabel ? `<button class="btn btn-primary" data-action="${btnAction || 'add'}">${btnLabel}</button>` : '';
+    const btn = btnLabel ? `<button class="btn btn-primary">${btnLabel}</button>` : '';
     return `
       <div class="empty-state">
         <div class="empty-icon">${icon}</div>
@@ -221,7 +220,7 @@ const App = {
 
   init() {
     Seeds.ensureSeeds();
-    const authReady = Auth.init();
+    Auth.init();
 
     // Hide splash
     setTimeout(() => {
@@ -230,19 +229,13 @@ const App = {
       const app = document.getElementById('app');
       if (app) app.classList.remove('hidden');
 
-      // انتظار استعادة جلسة Supabase (بمهلة قصوى للأوفلاين)
-      Promise.race([
-        Promise.resolve(authReady).catch(() => {}),
-        new Promise(resolve => setTimeout(resolve, 4500))
-      ]).then(() => {
-        // Check auth
-        if (!Auth.isLogged()) {
-          document.getElementById('auth-screen').classList.remove('hidden');
-        } else {
-          document.getElementById('main-app').classList.remove('hidden');
-          this.onAuthSuccess();
-        }
-      });
+      // Check auth
+      if (!Auth.isLogged()) {
+        document.getElementById('auth-screen').classList.remove('hidden');
+      } else {
+        document.getElementById('main-app').classList.remove('hidden');
+        this.onAuthSuccess();
+      }
     }, 800);
 
     this.bindEvents();
@@ -377,10 +370,7 @@ const App = {
     payments: () => Payments.render(),
     reports: () => Reports.render(),
     notifications: () => Notifications.render(),
-    settings: () => Settings.render(),
-    // نظام المناهج الدراسية — إضافة جديدة لا تلمس الأقسام الحالية
-    curriculum: () => CurriculumUI.render(),
-    'my-curriculum': () => CurriculumUI.renderMyCurriculum()
+    settings: () => Settings.render()
   },
 
   pageBinds: {
@@ -396,80 +386,27 @@ const App = {
     payments: () => Payments.bind(),
     reports: () => Reports.bind(),
     notifications: () => Notifications.bind(),
-    settings: () => Settings.bind(),
-    // نظام المناهج الدراسية
-    curriculum: () => CurriculumUI.bind(),
-    'my-curriculum': () => CurriculumUI.bindMyCurriculum()
+    settings: () => Settings.bind()
   },
 
   renderMore() {
     const items = [
       { id: 'lessons', icon: '📚', title: 'الحصص', desc: 'إدارة الجدول والحصص', color: '' },
       { id: 'attendance', icon: '✓', title: 'الحضور', desc: 'تسجيل ومتابعة الحضور', color: 'success' },
-      { id: 'exams', icon: '📝', title: 'الاختبارات', desc: 'الاختبارات والدرجات', color: 'warning' },
+      { id: 'exams', icon: '📝', title: 'الاختبارات', desc: 'الاختبارات والدرجات ومولّد الذكاء الاصطناعي', color: 'warning' },
       { id: 'assignments', icon: '📋', title: 'الواجبات', desc: 'تكليف ومتابعة الواجبات', color: 'info' },
-      { id: 'payments', icon: '💰', title: 'المدفوعات', desc: 'الإيصالات والتقارير المالية', color: 'gold' },
+      { id: 'payments', icon: '💰', title: 'المدفوعات', desc: 'الإيصالات والتقارير المالية والتذكيرات', color: 'gold' },
       { id: 'reports', icon: '📊', title: 'التقارير', desc: 'تقارير الطلاب والمجموعات', color: '' },
+      { id: 'daily-report', icon: '📅', title: 'التقرير اليومي', desc: 'تقرير شامل عن نشاط اليوم', color: 'info' },
+      { id: 'exam-scan', icon: '📷', title: 'مسح اختبار بالكاميرا', desc: 'OCR محلي + تقييم بموافقة المدرس', color: 'warning' },
       { id: 'notifications', icon: '🔔', title: 'الإشعارات', desc: 'التنبيهات والإعلانات', color: 'danger' },
-      { id: 'settings', icon: '⚙️', title: 'الإعدادات', desc: 'الحساب والأمان والنسخ', color: '' }
-    ];
-
-    // قسم الذكاء الاصطناعي — إضافة جديدة لا تلمس الأقسام الحالية
-    const aiItems = [
-      { id: 'ai-analysis', icon: '🧠', title: 'التحليل الذكي', desc: 'تحليل أداء الطلاب من بياناتهم المسجلة', color: 'info' },
-      { id: 'ai-exam-gen', icon: '✨', title: 'مولّد الامتحانات', desc: 'إنشاء امتحانات جاهزة في دقيقة', color: 'gold' }
-    ];
-
-    // قسم المناهج الدراسية — مصدر رسمي: وزارة التربية والتعليم
-    const curriculumItems = [
-      { id: 'curriculum', icon: '📚', title: 'المناهج', desc: 'الكتب الرسمية — وزارة التربية والتعليم', color: '' },
-      { id: 'my-curriculum', icon: '🎯', title: 'منهجي', desc: 'متابعة تقدم المنهج والدروس المدرّسة', color: 'success' }
+      { id: 'settings', icon: '⚙️', title: 'الإعدادات', desc: 'الحساب والأمان والقوالب والذكاء الاصطناعي', color: '' }
     ];
 
     return `
       <div class="page-header">
         <h1 class="page-title">المزيد</h1>
         <p class="page-subtitle">جميع أدوات التطبيق</p>
-      </div>
-
-      <div class="section-header" style="margin-bottom: var(--space-3);">
-        <h3 class="section-title">المناهج الدراسية</h3>
-      </div>
-      <div class="list stagger">
-        ${curriculumItems.map(item => `
-          <div class="list-item clickable" data-nav="${item.id}">
-            <div class="quick-action-icon ${item.color}">${item.icon}</div>
-            <div class="list-item-body">
-              <div class="list-item-title">${item.title}</div>
-              <div class="list-item-subtitle">${item.desc}</div>
-            </div>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="section-header" style="margin: var(--space-5) 0 var(--space-3);">
-        <h3 class="section-title">الذكاء الاصطناعي</h3>
-      </div>
-      <div class="list stagger">
-        ${aiItems.map(item => `
-          <div class="list-item clickable" data-nav="${item.id}">
-            <div class="quick-action-icon ${item.color}">${item.icon}</div>
-            <div class="list-item-body">
-              <div class="list-item-title">${item.title}</div>
-              <div class="list-item-subtitle">${item.desc}</div>
-            </div>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary); transform: scaleX(-1);">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="section-header" style="margin: var(--space-5) 0 var(--space-3);">
-        <h3 class="section-title">جميع الأدوات</h3>
       </div>
       <div class="list stagger">
         ${items.map(item => `
@@ -491,11 +428,10 @@ const App = {
   bindMore() {
     document.querySelectorAll('[data-nav]').forEach(el => {
       el.addEventListener('click', () => {
-        const nav = el.dataset.nav;
-        // أدوات الذكاء الاصطناعي — نوافذ مباشرة بدل التنقل
-        if (nav === 'ai-analysis') { AIGenerator.openStudentPicker(); return; }
-        if (nav === 'ai-exam-gen') { AIGenerator.openGenerator(); return; }
-        this.navigate(nav);
+        const target = el.dataset.nav;
+        if (target === 'daily-report') DailyReport.openDaily();
+        else if (target === 'exam-scan') ExamScan.openScanner();
+        else this.navigate(target);
       });
     });
   },

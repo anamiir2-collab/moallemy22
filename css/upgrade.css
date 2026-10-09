@@ -1,0 +1,317 @@
+/* ============================================
+   مُعلّمي | upgrade.css
+   أنماط الإضافات الجديدة: الحضور الصوتي، مولّد الاختبارات، ماسح الكاميرا، الطباعة
+   ============================================ */
+
+/* ===== Voice attendance mic button ===== */
+.voice-attendance-panel {
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-surface-3);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.mic-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(139, 94, 52, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.mic-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 16px rgba(139, 94, 52, 0.4);
+}
+
+.mic-btn:active {
+  transform: scale(0.97);
+}
+
+.mic-btn.recording {
+  background: var(--color-danger);
+  animation: mic-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); }
+}
+
+/* ===== Spinner (small + large) ===== */
+.spinner-sm {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-inline-end: 6px;
+}
+
+.spinner-lg {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--color-surface-3);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Voice transcript display ===== */
+#voice-transcript {
+  font-style: italic;
+  min-height: 1.4em;
+  transition: opacity 0.15s;
+}
+
+/* ===== Exam paper (print-friendly) ===== */
+.exam-paper {
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  color: #1F1B16;
+  line-height: 1.7;
+}
+
+.exam-paper h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: var(--space-2);
+}
+
+/* ===== Camera capture UI ===== */
+#camera-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== Question card in AI exam editor ===== */
+[data-question-card] {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.15s;
+}
+
+[data-question-card]:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+[data-question-card] textarea,
+[data-question-card] input[type="text"],
+[data-question-card] input[type="number"],
+[data-question-card] select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-surface-3);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+}
+
+[data-question-card] textarea:focus,
+[data-question-card] input:focus,
+[data-question-card] select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* ===== Settings rows for switch toggles ===== */
+.settings-row .switch {
+  flex-shrink: 0;
+}
+
+/* ===== Print layout =====
+   When the user clicks طباعة, only the print-target should be visible.
+   We hide navigation, modals, banners, and other UI chrome.
+*/
+@media print {
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the print target (modal-content or exam-paper or receipt) */
+  #modal-content,
+  #modal-content * {
+    visibility: visible;
+  }
+
+  /* Position modal-content at the top of the page */
+  #modal-content {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    max-width: 100% !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* Hide modal handle and close button when printing */
+  .modal-handle,
+  .modal-close,
+  .modal-header {
+    display: none !important;
+  }
+
+  /* Hide chrome */
+  .app-header,
+  .bottom-nav,
+  .install-banner,
+  .update-banner,
+  .toast-container,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  /* Restore colors for printing */
+  :root {
+    --color-bg: #fff;
+    --color-surface: #fff;
+    --color-surface-2: #f7f7f7;
+    --color-surface-3: #e0e0e0;
+    --text-primary: #000;
+    --text-secondary: #333;
+    --text-tertiary: #666;
+  }
+
+  /* Force white background for the entire page */
+  html, body {
+    background: #fff !important;
+  }
+
+  /* Better page breaks */
+  .stat-card,
+  .card,
+  .list-item,
+  .alert {
+    break-inside: avoid;
+  }
+
+  /* Hide action rows (Cancel / Save buttons) when printing */
+  .action-row {
+    display: none !important;
+  }
+}
+
+/* ===== Mobile-first refinements ===== */
+@media (max-width: 480px) {
+  .voice-attendance-panel {
+    padding: var(--space-2);
+  }
+  .mic-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .modal-content[style*="max-width: 640px"] {
+    max-width: 100% !important;
+  }
+}
+
+/* ===== Subtle entrance animation for new sections ===== */
+.fade-in-up {
+  animation: fadeInUp 0.35s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Badge sizing for tighter mobile layouts ===== */
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* ===== Improved empty states ===== */
+.empty-state {
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  opacity: 0.7;
+  margin-bottom: var(--space-3);
+}
+
+.empty-state .empty-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state .empty-text {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0 auto var(--space-4);
+}
+
+/* ===== Tab improvements for many tabs ===== */
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs .tab {
+  flex-shrink: 0;
+}
+
+/* ===== Better focus styles for accessibility ===== */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2.5px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== Loading skeleton polish ===== */
+.skeleton-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-xs);
+}

@@ -25,7 +25,6 @@ const Storage = (function () {
     curriculum: 'curriculum',
     notifications: 'notifications',
     announcements: 'announcements',
-    aiExams: 'ai_exams',
     settings: 'settings',
     meta: 'meta',
     installDismissed: 'install_dismissed'
@@ -48,10 +47,6 @@ const Storage = (function () {
   function write(name, value) {
     try {
       localStorage.setItem(key(name), JSON.stringify(value));
-      // إبلاغ طبقة المزامنة السحابية بأي تغيير محلي (طابور أوفلاين)
-      if (window.Cloud && typeof Cloud.markDirty === 'function') {
-        try { Cloud.markDirty(name); } catch (e) { /* لا تعطل التخزين المحلي */ }
-      }
       return true;
     } catch (e) {
       console.error('[Storage] write error:', name, e);
@@ -88,7 +83,7 @@ const Storage = (function () {
     // Generic CRUD
     get(name, fallback) { return read(name, fallback); },
     set(name, value) { return write(name, value); },
-    remove(name) { remove(name); if (window.Cloud) Cloud.markDirty(name); },
+    remove(name) { remove(name); },
 
     // ===== Collection operations =====
     list(collection, filterFn = null) {
