@@ -90,11 +90,11 @@ const Auth = (function () {
 
   function handleLogin(e) {
     e.preventDefault();
-    const phone = document.getElementById('login-phone').value.trim();
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
     const pin = document.getElementById('login-pin').value.trim();
 
-    if (!phone || !pin) {
-      UI.toast('من فضلك أدخل رقم الهاتف ورمز المرور', 'error');
+    if (!email || !pin) {
+      UI.toast('من فضلك أدخل البريد الإلكتروني ورمز المرور', 'error');
       return;
     }
 
@@ -105,14 +105,23 @@ const Auth = (function () {
       return;
     }
 
-    if (teacher.phone !== phone) {
-      UI.toast('رقم الهاتف غير مطابق', 'error');
+    // المطابقة بالبريد الإلكتروني (الأساسي) أو برقم الهاتف (للحسابات القديمة)
+    const emailMatch = teacher.email && teacher.email.toLowerCase() === email;
+    const phoneMatch = teacher.phone && teacher.phone === email;
+
+    if (!emailMatch && !phoneMatch) {
+      UI.toast('البريد الإلكتروني غير مطابق', 'error');
       return;
     }
 
     if (teacher.pin !== pin) {
       UI.toast('رمز المرور غير صحيح', 'error');
       return;
+    }
+
+    // تنبيه المستخدم القديم بإضافة بريد إلكتروني لحسابه
+    if (!teacher.email && phoneMatch) {
+      UI.toast('ملاحظة: يُفضّل تحديث بريدك الإلكتروني من الإعدادات', 'info');
     }
 
     currentTeacher = teacher;
@@ -134,9 +143,9 @@ const Auth = (function () {
     if (!name || name.length < 3) { UI.toast('أدخل اسمًا صحيحًا', 'error'); return; }
     if (!subject) { UI.toast('اختر المادة', 'error'); return; }
     if (!/^01[0125]\d{8}$/.test(phone)) { UI.toast('رقم الهاتف غير صحيح (مثال: 01012345678)', 'error'); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.toast('البريد الإلكتروني غير صحيح', 'error'); return; }
     if (pin.length < 4) { UI.toast('رمز المرور يجب أن يكون 4 أرقام على الأقل', 'error'); return; }
     if (pin !== pin2) { UI.toast('رمزا المرور غير متطابقين', 'error'); return; }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { UI.toast('البريد الإلكتروني غير صحيح', 'error'); return; }
 
     const teacher = {
       id: Storage.uid('t_'),
@@ -145,7 +154,7 @@ const Auth = (function () {
       stage: stage || null,
       governorate: gov || null,
       phone,
-      email: email || null,
+      email,
       pin,
       logo: null,
       bio: '',

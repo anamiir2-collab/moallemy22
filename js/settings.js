@@ -36,7 +36,7 @@ const Settings = {
             <div style="flex:1;">
               <h3 style="font-weight: 700;">${teacher.name || '—'}</h3>
               <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">${teacher.subject || ''}</p>
-              <p style="color: var(--text-tertiary); font-size: var(--font-size-xs); direction: ltr; text-align: right;">${teacher.phone || ''}</p>
+              <p style="color: var(--text-tertiary); font-size: var(--font-size-xs); direction: ltr; text-align: right;">${teacher.email || teacher.phone || ''}</p>
             </div>
           </div>
           <button class="btn btn-outline btn-block" style="margin-top: var(--space-3);" onclick="Settings.openProfileForm()">تعديل بيانات الحساب</button>
@@ -466,12 +466,12 @@ const Settings = {
             </select>
           </div>
           <div class="field">
-            <label>رقم الهاتف</label>
-            <input type="tel" name="phone" value="${teacher.phone || ''}">
+            <label>البريد الإلكتروني *</label>
+            <input type="email" name="email" required value="${teacher.email || ''}">
           </div>
           <div class="field">
-            <label>البريد الإلكتروني</label>
-            <input type="email" name="email" value="${teacher.email || ''}">
+            <label>رقم الهاتف</label>
+            <input type="tel" name="phone" value="${teacher.phone || ''}">
           </div>
           <div class="field">
             <label>نبذة تعريفية</label>
